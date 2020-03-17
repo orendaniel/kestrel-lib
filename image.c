@@ -105,7 +105,6 @@ Image* read_rgb_pixel_map(const char* file) {
 		for (int j = 0; j < img->width; j++) {
 			value_t r, b, g;
 			fscanf(f, "%d %d %d\n", &r, &g, &b);
-			printf("%d %d %d\n", r, g, b);
 			set_at(img, 0, j, i, r), //red channel
 			set_at(img, 1, j, i, g), //blue channel
 			set_at(img, 2, j, i, b); //green channel

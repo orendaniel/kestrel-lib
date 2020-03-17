@@ -101,17 +101,18 @@ static int lua_in_range(lua_State* L) {
 			return 0;
 
 		for (int i = 1; i <= n_lower; i++) {
-			value_t top;
-			lua_rawgeti(L, 2, i);
-			top = lua_gettop(L);
-			lowers[i-1] = top;
+			/*
+				CHECK IF CAN BE REWRITTED
+			*/
+			lua_pushinteger(L, i);
+			lua_gettable(L, 2);
+			lowers[i-1] = lua_tointeger(L, -1);
 
-			lua_rawgeti(L, 3, i);
-			top = lua_gettop(L);
-			uppers[i-1] = top;
+			lua_pushinteger(L, i);
+			lua_gettable(L, 3);
+			uppers[i-1] = lua_tointeger(L, -1);
 
 		}
-		
 		Image** prange = (Image**)lua_newuserdata(L, sizeof(Image*));
 		*prange = in_range(*pimg, lowers, uppers, on_value, off_value);
 	
@@ -196,11 +197,12 @@ static int lua_find_contours(lua_State* L) {
 	lua_createtable(L, contours_amount, 0);
 	for (int i = 0; i < contours_amount; i++){
 		
+		lua_pushinteger(L, i+1);
 		Contour** pcnt = (Contour**)lua_newuserdata(L, sizeof(Contour*));
 		*pcnt = cnts[i];
 		luaL_getmetatable(L, CONTOUR_MT);
 		lua_setmetatable(L, -2);
-		lua_pushinteger(L, i+1);
+
 
 		lua_settable(L, -3);
 		
@@ -217,6 +219,25 @@ static int lua_contour_center(lua_State* L) {
 	lua_pushnumber(L, x +0.5);
 	lua_pushnumber(L, y +0.5);
 	return 2;
+}
+
+static int lua_contour_to_table(lua_State* L) {
+	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
+	lua_createtable(L, (*pcnt)->index, 1);
+	for (int i = 0; i < (*pcnt)->index; i++) {
+		lua_pushinteger(L, i+1);//index
+
+		lua_createtable(L, 2, 0);
+		lua_pushinteger(L, 1);//X index
+		lua_pushinteger(L, (*pcnt)->Xi[i]);
+		lua_settable(L, -3);
+		lua_pushinteger(L, 2);//Y index
+		lua_pushinteger(L, (*pcnt)->Yi[i]);
+		lua_settable(L, -3);
+		
+		lua_settable(L, -3);
+	}
+	return 1;
 }
 
 static int lua_gc_contour(lua_State* L) {
@@ -266,6 +287,7 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 	if (luaL_newmetatable(L, CONTOUR_MT)) {
 		const luaL_Reg contour_funcs[] = {
 				{"center",	lua_contour_center},
+				{"totable",	lua_contour_to_table},
 				{"__gc",	lua_gc_contour},
 				{NULL, NULL},
 			};
