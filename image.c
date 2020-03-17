@@ -28,7 +28,7 @@ value_t get_at(Image* img, size_t chnl, size_t x, size_t y, value_t def_value) {
 		return img->data[index];
 
 	else {
-		fprintf(stderr, "Out of array bounds\n");
+		//fprintf(stderr, "Out of array bounds\n");
 		return def_value;
 	}
 
@@ -43,8 +43,8 @@ void set_at(Image* img, size_t chnl, size_t x, size_t y, value_t value) {
 
 		img->data[index] = value;
 
-	else
-		fprintf(stderr, "Out of array bounds\n");
+	//else
+		//fprintf(stderr, "Out of array bounds\n");
 }
 
 

@@ -170,10 +170,9 @@ static int lua_open_device(lua_State* L) {
 static int lua_read_frame(lua_State* L) {
 	
 	Device** pdev = (Device**)luaL_checkudata(L, 1, DEVICE_MT);
-	Image* img = read_frame(*pdev);
-
 	Image** pimg = (Image**)lua_newuserdata(L, sizeof(Image*));
-	*pimg = img;
+
+	*pimg = read_frame(*pdev);
 
 	luaL_getmetatable(L, IMAGE_MT);
 	lua_setmetatable(L, -2);
@@ -188,11 +187,41 @@ static int lua_close_device(lua_State* L) {
 }
 
 static int lua_find_contours(lua_State* L) {
-	return 0;
+	Image** pimg = (Image**)luaL_checkudata(L, 1, IMAGE_MT);
+
+	size_t contours_amount;
+	Contour** cnts = find_contours(*pimg, &contours_amount);
+
+
+	lua_createtable(L, contours_amount, 0);
+	for (int i = 0; i < contours_amount; i++){
+		
+		Contour** pcnt = (Contour**)lua_newuserdata(L, sizeof(Contour*));
+		*pcnt = cnts[i];
+		luaL_getmetatable(L, CONTOUR_MT);
+		lua_setmetatable(L, -2);
+		lua_pushinteger(L, i+1);
+
+		lua_settable(L, -3);
+		
+	}
+
+
+	return 1;
 }
 
-static int lua_read_frame(lua_State* L){
+static int lua_contour_center(lua_State* L) {
+	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
+	float x, y;
+	contour_center(*pcnt, &x, &y);
+	lua_pushnumber(L, x +0.5);
+	lua_pushnumber(L, y +0.5);
+	return 2;
+}
 
+static int lua_gc_contour(lua_State* L) {
+	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
+	free_contour(*pcnt);
 	return 0;
 }
 
@@ -236,7 +265,8 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 
 	if (luaL_newmetatable(L, CONTOUR_MT)) {
 		const luaL_Reg contour_funcs[] = {
-				{"center",	lua_read_frame},
+				{"center",	lua_contour_center},
+				{"__gc",	lua_gc_contour},
 				{NULL, NULL},
 			};
 		luaL_setfuncs(L, contour_funcs, 0);
