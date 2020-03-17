@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
+
 typedef struct {
 	void*	start;
 	size_t	length;
@@ -28,7 +29,7 @@ typedef struct {
 	Buffer*							buffers;
 } Device;
 
-Device*			new_device(char* name, size_t width, size_t height);
+Device*			new_device(const char* name, size_t width, size_t height);
 Image*			read_frame(Device* dev);
 void			free_device(Device* dev);
 

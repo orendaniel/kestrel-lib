@@ -4,10 +4,10 @@
 #include "common.h"
 
 typedef struct {
-	size_t 	channels;
-	size_t 	width;
-	size_t 	height;
-	value_t *data;
+	size_t		channels;
+	size_t		width;
+	size_t		height;
+	value_t*	data;
 } Image;
 
 Image*		new_image(size_t channels, size_t width, size_t height);

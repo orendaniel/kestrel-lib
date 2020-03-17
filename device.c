@@ -19,14 +19,14 @@ void free_buffer(Buffer* bff) {
 }
 
 
-Device*	new_device(char* name, size_t width, size_t height) {
+Device*	new_device(const char* name, size_t width, size_t height) {
 
 	Device* dev = calloc(1, sizeof(Device));
 
 	dev->fd = v4l2_open(name, O_RDWR | O_NONBLOCK, 0);
 	if (dev->fd < 0) {
 		perror("Unable to open device");
-		return 0;
+		return NULL;
 	}
 
 	dev->fmt		= calloc(1, sizeof(struct v4l2_format));
@@ -34,13 +34,12 @@ Device*	new_device(char* name, size_t width, size_t height) {
 	dev->req		= calloc(1, sizeof(struct v4l2_requestbuffers));
 	dev->tv			= calloc(1, sizeof(struct timeval));
 
-	/*
 	if (dev->fmt && dev->v4l_buffer && dev->req && dev->tv)
-		fprintf(stderr, "Device opened successfully\n");
+		fprintf(stderr, "Device allocated successfully\n");
 	else {
-		fprintf(stderr, "Cannot open device\n");
-		return 0;
-	}*/
+		fprintf(stderr, "Cannot allocate device\n");
+		return NULL;
+	}
 
 	dev->fmt->type						= V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dev->fmt->fmt.pix.width 			= width;
@@ -52,7 +51,7 @@ Device*	new_device(char* name, size_t width, size_t height) {
 
 	if (dev->fmt->fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
 		printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
-		return 0;
+		return NULL;
 	}
 
 	if ((dev->fmt->fmt.pix.width != width) || (dev->fmt->fmt.pix.height != height))
@@ -82,7 +81,7 @@ Device*	new_device(char* name, size_t width, size_t height) {
 
 		if (MAP_FAILED == dev->buffers[dev->n_buffers].start) {
 			perror("mmap");
-			exit(EXIT_FAILURE);
+			return NULL;
 		}
 	}
 
@@ -136,9 +135,10 @@ Image* read_frame(Device* dev) {
 		xioctl(dev->fd, VIDIOC_QBUF, dev->v4l_buffer);
 		return img;
 	}
-	else 
+	else {
+		fprintf(stderr, "Cannot grab image from device\n");
 		return NULL;
-	
+	}
 }
 
 void free_device(Device* dev) {

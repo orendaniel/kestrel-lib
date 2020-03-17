@@ -5,16 +5,16 @@
 Image* new_image(size_t channels, size_t width, size_t height) {
 	value_t* data = calloc(width * height * channels, sizeof(value_t));
 	if (data) {
-		Image* img = malloc(sizeof(Image));
-		img->channels = channels;
-		img->width = width;
-		img->height = height;
-		img->data = data;
+		Image* img 		= malloc(sizeof(Image));
+		img->channels 	= channels;
+		img->width 		= width;
+		img->height 	= height;
+		img->data 		= data;
 		return img;
 	}
 	else {
 		fprintf(stderr, "Cannot allocate image\n");
-		return 0;
+		return NULL;
 	}
 }
 
@@ -58,6 +58,7 @@ void free_image(Image* img) {
 /*
 MAKE A MACRO TO CALCULATE MAXIMUM SIZE
 */
+/*REWRITE IMAGE I/O*/
 void write_rgb_pixel_map(const char* file, Image* img) {
 	FILE* f = fopen(file, "w");
 
@@ -97,13 +98,14 @@ Image* read_rgb_pixel_map(const char* file) {
 
 	size_t width, height, max_value;
 	
-	fscanf(f, "%d %d %d", &width, &height, &max_value);
+	fscanf(f, "%d %d %d\n", &width, &height, &max_value);
 	Image* img = new_image(3, width, height);
 
 	for (int i = 0; i < img->height; i++) {
 		for (int j = 0; j < img->width; j++) {
 			value_t r, b, g;
-			fscanf(f, "%d %d %d", &r, &g, &b);
+			fscanf(f, "%d %d %d\n", &r, &g, &b);
+			printf("%d %d %d\n", r, g, b);
 			set_at(img, 0, j, i, r), //red channel
 			set_at(img, 1, j, i, g), //blue channel
 			set_at(img, 2, j, i, b); //green channel
@@ -116,55 +118,63 @@ Image* read_rgb_pixel_map(const char* file) {
 
 Image* in_range(Image* img, value_t* lower, value_t* upper, value_t on, value_t off) {
 	Image* result = new_image(1, img->width, img->height);
-	size_t chnls = img->channels;
-	value_t current[chnls];
-	for (int i = 0; i < img->height; i++) {
-		for (int j = 0; j < img->width; j++) {
-			for (int c = 0; c < chnls; c++) 
-				current[c] = get_at(img, c, j, i, 0);
+	if (result) {
+		size_t chnls = img->channels;
+		value_t current[chnls];
+		for (int i = 0; i < img->height; i++) {
+			for (int j = 0; j < img->width; j++) {
+				for (int c = 0; c < chnls; c++) 
+					current[c] = get_at(img, c, j, i, 0);
 
-			value_t is_on = on;
-			for (int c = 0; c < chnls; c++) 
-				if (current[c] < lower[c] || current[c] > upper[c])
-					is_on = off;
+				value_t is_on = on;
+				for (int c = 0; c < chnls; c++) 
+					if (current[c] < lower[c] || current[c] > upper[c])
+						is_on = off;
 
-			set_at(result, 0, j, i, is_on);
-			
+				set_at(result, 0, j, i, is_on);
+				
+			}
 		}
+		return result;
 	}
-	return result;
+	else
+		return NULL;
 }
 
 Image* rgb_to_hsv(Image* img) {
 	if (img->channels == 3) {
 		Image* result = new_image(3, img->width, img->height);
-		for (int i = 0; i < img->height; i++) {
-			for (int j = 0; j < img->width; j++) {
-				float r 	= (float)get_at(img, 0, j, i, 0)/255;
-				float g 	= (float)get_at(img, 1, j, i, 0)/255;
-				float b		= (float)get_at(img, 2, j, i, 0)/255;
-				float max 	= MAX(MAX(r, g), b);
-				float min 	= MIN(MIN(r, g), b);
-				float df	= max - min;
-				if (df == 0) 
-					set_at(result, 0, j, i, 0);
-				else if (max == r)
-					set_at(result, 0, j, i, (value_t)((int)(60 * ((g-b)/df) + 360) % 360));
-				else if (max == g)
-					set_at(result, 0, j, i, (value_t)((int)(60 * ((b-r)/df) + 120) % 360));
-				else if (max == b)
-					set_at(result, 0, j, i, (value_t)((int)(60 * ((r-g)/df) + 240) % 360));
+		if (result) {
+			for (int i = 0; i < img->height; i++) {
+				for (int j = 0; j < img->width; j++) {
+					float r 	= (float)get_at(img, 0, j, i, 0)/255;
+					float g 	= (float)get_at(img, 1, j, i, 0)/255;
+					float b		= (float)get_at(img, 2, j, i, 0)/255;
+					float max 	= MAX(MAX(r, g), b);
+					float min 	= MIN(MIN(r, g), b);
+					float df	= max - min;
+					if (df == 0) 
+						set_at(result, 0, j, i, 0);
+					else if (max == r)
+						set_at(result, 0, j, i, (value_t)((int)(60 * ((g-b)/df) + 360) % 360));
+					else if (max == g)
+						set_at(result, 0, j, i, (value_t)((int)(60 * ((b-r)/df) + 120) % 360));
+					else if (max == b)
+						set_at(result, 0, j, i, (value_t)((int)(60 * ((r-g)/df) + 240) % 360));
 
-				if (max == 0)
-					set_at(result, 1, j, i, 0);
-				else
-					set_at(result, 1, j, i, (value_t)((df/max)*100));
-					
-				set_at(result, 2, j, i, (value_t)(max*100));
+					if (max == 0)
+						set_at(result, 1, j, i, 0);
+					else
+						set_at(result, 1, j, i, (value_t)((df/max)*100));
+						
+					set_at(result, 2, j, i, (value_t)(max*100));
+				}
 			}
+			
+			return result;
 		}
-		
-		return result;
+		else
+			return NULL;
 	}
 	else {
 		fprintf(stderr, "Must have only R G B channels\n");
