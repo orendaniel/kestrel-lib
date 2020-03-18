@@ -1,6 +1,4 @@
 #include "image.h"
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
 
 Image* new_image(size_t channels, size_t width, size_t height) {
 	value_t* data = calloc(width * height * channels, sizeof(value_t));
@@ -18,6 +16,11 @@ Image* new_image(size_t channels, size_t width, size_t height) {
 	}
 }
 
+/*
+get and set don't return error if given invalid index
+that is because some algorithms can go out of range
+get_at will just return a default value if out of range
+*/
 value_t get_at(Image* img, size_t chnl, size_t x, size_t y, value_t def_value) {
 	size_t index = chnl + img->channels * (x + y * img->width);
 	if (index >= 0 && index < img->width * img->height * img->channels &&
@@ -27,10 +30,8 @@ value_t get_at(Image* img, size_t chnl, size_t x, size_t y, value_t def_value) {
 
 		return img->data[index];
 
-	else {
-		//fprintf(stderr, "Out of array bounds\n");
+	else 
 		return def_value;
-	}
 
 }
 
@@ -42,9 +43,6 @@ void set_at(Image* img, size_t chnl, size_t x, size_t y, value_t value) {
 			chnl < img->channels && chnl >= 0)
 
 		img->data[index] = value;
-
-	//else
-		//fprintf(stderr, "Out of array bounds\n");
 }
 
 
@@ -54,11 +52,10 @@ void free_image(Image* img) {
 }
 
 
-/*DO ERROR HANDLING FOR READ/WRITE*/
 /*
+DO ERROR HANDLING FOR READ/WRITE
 MAKE A MACRO TO CALCULATE MAXIMUM SIZE
 */
-/*REWRITE IMAGE I/O*/
 void write_rgb_pixel_map(const char* file, Image* img) {
 	FILE* f = fopen(file, "w");
 
@@ -115,6 +112,12 @@ Image* read_rgb_pixel_map(const char* file) {
 	return img;
 }
 
+/*
+in range will return a binary image if pixel values are in range
+
+in range doesn't check if lower and upper's array lengths are valid
+it assumes that lower and upper's length are both equal to the number of channels
+*/
 Image* in_range(Image* img, value_t* lower, value_t* upper, value_t on, value_t off) {
 	Image* result = new_image(1, img->width, img->height);
 	if (result) {

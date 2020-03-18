@@ -47,6 +47,18 @@ static int lua_read_rgb_pixel_map(lua_State* L) {
 	return 1;	
 }
 
+static int lua_rgb_to_hsv(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	Image* 	hsv 	= rgb_to_hsv(*pimg);
+	Image** phsv 	= (Image**)lua_newuserdata(L, sizeof(Image*));
+
+	*phsv = hsv;
+
+	luaL_getmetatable(L, IMAGE_MT);
+	lua_setmetatable(L, -2);
+	
+	return 1;
+}
 
 static int lua_set_at(lua_State* L) {
 	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
@@ -101,10 +113,7 @@ static int lua_in_range(lua_State* L) {
 			return 0;
 
 		for (int i = 1; i <= n_lower; i++) {
-			/*
-				CHECK IF CAN BE REWRITTED
-			*/
-			lua_pushinteger(L, i);
+			lua_pushinteger(L, i); //tables are at 2 and 3 pushing index to get value
 			lua_gettable(L, 2);
 			lowers[i-1] = lua_tointeger(L, -1);
 
@@ -126,17 +135,14 @@ static int lua_in_range(lua_State* L) {
 		
 }
 
-static int lua_rgb_to_hsv(lua_State* L) {
-	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
-	Image* 	hsv 	= rgb_to_hsv(*pimg);
-	Image** phsv 	= (Image**)lua_newuserdata(L, sizeof(Image*));
 
-	*phsv = hsv;
-
-	luaL_getmetatable(L, IMAGE_MT);
-	lua_setmetatable(L, -2);
+static int lua_image_shape(lua_State* L) {
+	Image** pimg = luaL_checkudata(L, 1, IMAGE_MT);
+	lua_pushinteger(L, (*pimg)->channels);
+	lua_pushinteger(L, (*pimg)->width);
+	lua_pushinteger(L, (*pimg)->height);
 	
-	return 1;
+	return 3;
 }
 
 static int lua_gc_image(lua_State* L) {
@@ -146,10 +152,9 @@ static int lua_gc_image(lua_State* L) {
 }
 
 static int lua_open_device(lua_State* L) {
-	
 	const char* path 	= luaL_checkstring(L, 1);
-	size_t 		width 	= luaL_optinteger(L, 2, 160);
-	size_t 		height	= luaL_optinteger(L, 3, 120);
+	size_t 		width 	= luaL_optinteger(L, 2, DEFAULT_DEVICE_WIDTH);
+	size_t 		height	= luaL_optinteger(L, 3, DEFAULT_DEVICE_HEIGHT);
 	Device* 	dev 	= new_device(path, width, height);
 
 	if (dev == NULL)
@@ -167,9 +172,7 @@ static int lua_open_device(lua_State* L) {
 	return 1;
 }
 
-
 static int lua_read_frame(lua_State* L) {
-	
 	Device** pdev = (Device**)luaL_checkudata(L, 1, DEVICE_MT);
 	Image** pimg = (Image**)lua_newuserdata(L, sizeof(Image*));
 
@@ -187,17 +190,27 @@ static int lua_close_device(lua_State* L) {
 	return 0;
 }
 
+
+static int lua_device_resolution(lua_State* L) {
+	Device** pdev = (Device**)luaL_checkudata(L, 1, DEVICE_MT);
+	lua_pushinteger(L, (*pdev)->fmt->fmt.pix.width);
+	lua_pushinteger(L, (*pdev)->fmt->fmt.pix.height);
+	return 2;
+}
+
 static int lua_find_contours(lua_State* L) {
-	Image** pimg = (Image**)luaL_checkudata(L, 1, IMAGE_MT);
+	Image** pimg 	= (Image**)luaL_checkudata(L, 1, IMAGE_MT);
+	size_t 	steps_x = luaL_optinteger(L, 2, DEFAULT_STEPS_TRACING);
+	size_t 	steps_y = luaL_optinteger(L, 2, DEFAULT_STEPS_TRACING);
 
 	size_t contours_amount;
-	Contour** cnts = find_contours(*pimg, &contours_amount);
-
+	Contour** cnts = find_contours(*pimg, &contours_amount, steps_x, steps_y);
 
 	lua_createtable(L, contours_amount, 0);
 	for (int i = 0; i < contours_amount; i++){
 		
-		lua_pushinteger(L, i+1);
+		lua_pushinteger(L, i+1);//index of contour
+
 		Contour** pcnt = (Contour**)lua_newuserdata(L, sizeof(Contour*));
 		*pcnt = cnts[i];
 		luaL_getmetatable(L, CONTOUR_MT);
@@ -208,7 +221,6 @@ static int lua_find_contours(lua_State* L) {
 		
 	}
 
-
 	return 1;
 }
 
@@ -216,7 +228,7 @@ static int lua_contour_center(lua_State* L) {
 	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
 	float x, y;
 	contour_center(*pcnt, &x, &y);
-	lua_pushnumber(L, x +0.5);
+	lua_pushnumber(L, x +0.5); //adds 0.5 because lua counts from 1 --> 1 pixel /2 = 0.5
 	lua_pushnumber(L, y +0.5);
 	return 2;
 }
@@ -229,10 +241,11 @@ static int lua_contour_to_table(lua_State* L) {
 
 		lua_createtable(L, 2, 0);
 		lua_pushinteger(L, 1);//X index
-		lua_pushinteger(L, (*pcnt)->Xi[i]);
+		lua_pushinteger(L, (*pcnt)->Xi[i] +1);
 		lua_settable(L, -3);
+
 		lua_pushinteger(L, 2);//Y index
-		lua_pushinteger(L, (*pcnt)->Yi[i]);
+		lua_pushinteger(L, (*pcnt)->Yi[i] +1);
 		lua_settable(L, -3);
 		
 		lua_settable(L, -3);
@@ -250,6 +263,7 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 	const luaL_Reg lib[] = {
 		{"newimage",			lua_new_image},
 		{"read_rgb_pixelmap",	lua_read_rgb_pixel_map},
+		{"rgb_to_hsv", 			lua_rgb_to_hsv},
 		{"opendevice",			lua_open_device},
 		{"findcontours",		lua_find_contours},
 		{NULL, NULL},
@@ -261,7 +275,7 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 				{"setat", 				lua_set_at},
 				{"write_rgb_pixelmap", 	lua_write_rgb_pixel_map},
 				{"inrange", 			lua_in_range},
-				{"rgb_to_hsv", 			lua_rgb_to_hsv},
+				{"shape", 				lua_image_shape},
 				{"__gc", 				lua_gc_image},
 				{NULL, NULL},
 			};
@@ -269,20 +283,22 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 		lua_pushvalue(L, -1);
 		lua_setfield(L, -2, "__index");
 	}
+
 	lua_pop(L, 1); // discard metatable
 	
 	if (luaL_newmetatable(L, DEVICE_MT)) {
 		const luaL_Reg device_funcs[] = {
 				{"readframe", 	lua_read_frame},
 				{"close", 		lua_close_device},
-				{"__gc", 		lua_close_device},
+				{"resolution", 	lua_device_resolution},
 				{NULL, NULL},
 			};
 		luaL_setfuncs(L, device_funcs, 0);
 		lua_pushvalue(L, -1);
 		lua_setfield(L, -2, "__index");
 	}
-	lua_pop(L, 1); // discard metatable
+
+	lua_pop(L, 1);
 
 	if (luaL_newmetatable(L, CONTOUR_MT)) {
 		const luaL_Reg contour_funcs[] = {
@@ -295,7 +311,8 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 		lua_pushvalue(L, -1);
 		lua_setfield(L, -2, "__index");
 	}
-	lua_pop(L, 1); // discard metatable
+
+	lua_pop(L, 1); 
 
 	lua_createtable(L, sizeof(lib) / sizeof(lib[0]), 0);
 	luaL_setfuncs(L, lib, 0);

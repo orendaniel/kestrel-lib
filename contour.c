@@ -14,7 +14,12 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	size_t nx_x = st_x + next_step_x;
 	size_t nx_y = st_y + next_step_y;
 	
+	/*
+	counter should not exceed 8
+	because a square has 8 sides
+	*/
 	int safty_counter = 0;
+
 
 	while (!(nx_x == st_x && nx_y == st_y) && safty_counter < 8) {
 		if (get_at(img, 0, nx_x, nx_y, 0) == 0) {
@@ -87,8 +92,6 @@ void insert_point(Contour* cnt, size_t x, size_t y) {
 			cnt->index++;
 		}
 		else {
-			//FAIL HANDLE THIS LATER
-
 			fprintf(stderr, "Cannot resize contour\n");
 		}
 	}
@@ -101,18 +104,23 @@ void free_contour(Contour* cnt) {
 }
 
 
-Contour** find_contours (Image* img, size_t* index_size) {
+/*
+find the contours in a binary image using square trace with 4 connectivity
+set steps to 1 for full precision at the price of speed.
+recommended 3 steps for regular images
+*/
+Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t steps_y) {
 	if (img->channels == 1) {
 		Image* buffer = new_image(1, img->width, img->height);
 		Contour** cnts = malloc(sizeof(Contour**));
 		size_t amount = 0;
-		for (int i = 0; i < img->height; i += 3) {
-			for (int j = 0; j < img->width; j += 3) {
+		for (size_t i = 0; i < img->height; i += steps_y) {
+			for (size_t j = 0; j < img->width; j += steps_x) {
 				if (get_at(img, 0, j, i, 0) != 0 &&
 						get_at (buffer, 0, j, i, 0) == 0 &&
-						IS_BORDER(img, j, i)) {
+						IS_BORDER(img, j, i)) { //only borders remain
 
-					Contour* cnt = square_trace(j, i, img, buffer);
+					Contour* cnt = square_trace(j, i, img, buffer); //traces the border
 					if (cnt) {
 						Contour** tmp_cnts = realloc(cnts, (amount +1) * sizeof(Contour*));
 						if (tmp_cnts != 0) {

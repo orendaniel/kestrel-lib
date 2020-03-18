@@ -1,5 +1,10 @@
 #include "device.h"
 
+/*
+Communication with v4l
+please refer to v4l and libv4l documentation
+*/
+
 static void	xioctl(int fh, int request, void* arg) {
 	int r;
 
@@ -20,7 +25,6 @@ void free_buffer(Buffer* bff) {
 
 
 Device*	new_device(const char* name, size_t width, size_t height) {
-
 	Device* dev = calloc(1, sizeof(Device));
 
 	dev->fd = v4l2_open(name, O_RDWR | O_NONBLOCK, 0);
@@ -29,7 +33,7 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 		return NULL;
 	}
 
-	dev->fmt		= calloc(1, sizeof(struct v4l2_format));
+	dev->fmt		= calloc(1, sizeof(struct v4l2_format));//allocate memory
 	dev->v4l_buffer	= calloc(1, sizeof(struct v4l2_buffer));
 	dev->req		= calloc(1, sizeof(struct v4l2_requestbuffers));
 	dev->tv			= calloc(1, sizeof(struct timeval));
@@ -41,7 +45,7 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 		return NULL;
 	}
 
-	dev->fmt->type						= V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	dev->fmt->type						= V4L2_BUF_TYPE_VIDEO_CAPTURE; //formats
 	dev->fmt->fmt.pix.width 			= width;
 	dev->fmt->fmt.pix.height			= height;
 	dev->fmt->fmt.pix.pixelformat		= V4L2_PIX_FMT_RGB24;
@@ -65,7 +69,7 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 
 	xioctl(dev->fd, VIDIOC_REQBUFS, dev->req);
 
-	dev->buffers = calloc(dev->req->count, sizeof(Buffer));//check if sizeof(Buffer*)
+	dev->buffers = calloc(dev->req->count, sizeof(Buffer));
 
 	for (dev->n_buffers = 0; dev->n_buffers < dev->req->count; ++dev->n_buffers) {
 		dev->v4l_buffer->type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
