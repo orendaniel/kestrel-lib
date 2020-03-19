@@ -401,6 +401,8 @@ static int lua_contour_extreme_points(lua_State* L) {
 		
 		lua_settable(L, -3);
 	}
+	free(x);
+	free(y);
 	return 1;
 }
 
