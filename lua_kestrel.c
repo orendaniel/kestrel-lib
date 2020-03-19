@@ -10,6 +10,11 @@
 #define DEVICE_MT 	"kestrel-device"
 #define CONTOUR_MT 	"kestrel-contour"
 
+static int get_by_index(lua_State* L, int tindex, int i) {
+	lua_pushinteger(L, i);
+	lua_gettable(L, tindex);
+}
+
 static int lua_new_image(lua_State* L) {
 	size_t c = luaL_checkinteger(L, 1);
 	size_t w = luaL_checkinteger(L, 2);
@@ -113,12 +118,16 @@ static int lua_in_range(lua_State* L) {
 			return 0;
 
 		for (int i = 1; i <= n_lower; i++) {
-			lua_pushinteger(L, i); //tables are at 2 and 3 pushing index to get value
-			lua_gettable(L, 2);
+			//tables are at 2 and 3 pushing index to get value
+			/*
+			lua_pushinteger(L, i); 
+			lua_gettable(L, 2);*/
+			get_by_index(L, 2, i);
 			lowers[i-1] = lua_tointeger(L, -1);
 
-			lua_pushinteger(L, i);
-			lua_gettable(L, 3);
+			/*lua_pushinteger(L, i);
+			lua_gettable(L, 3);*/
+			get_by_index(L, 3, i);
 			uppers[i-1] = lua_tointeger(L, -1);
 
 		}
@@ -134,7 +143,6 @@ static int lua_in_range(lua_State* L) {
 		return 0;
 		
 }
-
 
 static int lua_image_shape(lua_State* L) {
 	Image** pimg = luaL_checkudata(L, 1, IMAGE_MT);
@@ -228,9 +236,48 @@ static int lua_contour_center(lua_State* L) {
 	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
 	float x, y;
 	contour_center(*pcnt, &x, &y);
+
+	lua_createtable(L, 2, 0);
+
+	lua_pushinteger(L, 1);//X index
 	lua_pushnumber(L, x +0.5); //adds 0.5 because lua counts from 1 --> 1 pixel /2 = 0.5
+	lua_settable(L, 2);
+
+	lua_pushinteger(L, 2);//X index
 	lua_pushnumber(L, y +0.5);
-	return 2;
+	lua_settable(L, 2);
+	return 1;
+}
+
+static int lua_counter_is_inside(lua_State* L) {
+	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
+
+	luaL_checktype(L, 2, LUA_TTABLE);
+	size_t n = luaL_len(L, 2);
+	if (n == 2) {
+		get_by_index(L, 2, 1);
+		float x = lua_tonumber(L, -1) -1;
+		if (x < 0) {
+			lua_pushboolean(L, 0);
+			return 1;
+		}
+		
+
+		get_by_index(L, 2, 2);
+		float y = lua_tonumber(L, -1) -1;
+		if (y < 0) {
+			lua_pushboolean(L, 0);
+			return 1;
+		}
+
+		char result = is_inside_contour(*pcnt, x, y);
+		lua_pushboolean(L, result);
+		return 1;
+	}
+	else {
+		luaL_error(L, "2d point expected");
+		return 0;
+	}
 }
 
 static int lua_contour_to_table(lua_State* L) {
@@ -302,9 +349,10 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 
 	if (luaL_newmetatable(L, CONTOUR_MT)) {
 		const luaL_Reg contour_funcs[] = {
-				{"center",	lua_contour_center},
-				{"totable",	lua_contour_to_table},
-				{"__gc",	lua_gc_contour},
+				{"center",		lua_contour_center},
+				{"is_inside",	lua_counter_is_inside},
+				{"totable",		lua_contour_to_table},
+				{"__gc",		lua_gc_contour},
 				{NULL, NULL},
 			};
 		luaL_setfuncs(L, contour_funcs, 0);

@@ -17,5 +17,6 @@ void 		insert_point(Contour* cnt, size_t x, size_t y);
 void 		free_contour(Contour* cnt);
 Contour** 	find_contours(Image* img, size_t* index_size, size_t steps_x, size_t steps_y);
 void		contour_center(Contour* cnt, float* x, float* y);
+char 		is_inside_contour(Contour* cnt, float x, float y);
 
 #endif
