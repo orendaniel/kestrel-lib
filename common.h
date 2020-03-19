@@ -6,7 +6,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
-
+#include <limits.h>
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -18,6 +18,7 @@
 
 #define DEFAULT_STEPS_TRACING 	3
 
+#define MAX_VALUE UCHAR_MAX
 
 typedef unsigned char value_t;
 
