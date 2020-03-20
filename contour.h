@@ -4,11 +4,13 @@
 #include "common.h"
 #include "image.h"
 
+struct point {
+	size_t x, y;
+};
+
 typedef struct {
-	size_t*	Xi;
-	size_t*	Yi;
-	size_t 	size;
-	size_t 	index;
+	struct point* 	points;
+	size_t 			size, index;
 } Contour;
 
 
@@ -19,5 +21,5 @@ Contour** 	find_contours(Image* img, size_t* index_size, size_t steps_x, size_t 
 void		contour_center(Contour* cnt, float* x, float* y);
 char 		is_inside_contour(Contour* cnt, float x, float y);
 void 		get_contour_extreme(Contour* cnt, size_t* x, size_t* y);
-size_t get_contour_area(Contour* cnt);
+size_t 		get_contour_area(Contour* cnt);
 #endif

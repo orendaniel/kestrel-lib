@@ -11,7 +11,7 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-#define CONTOUR_ALLOCATION_SIZE 100
+#define CONTOUR_ALLOCATION_SIZE 2
 
 #define DEFAULT_DEVICE_WIDTH 	160
 #define DEFAULT_DEVICE_HEIGHT 	120
