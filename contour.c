@@ -32,9 +32,10 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 		if (get_at(img, 0, nx_x, nx_y, 0) == 0) {
 			/*
 			add these lines to enable 4 connectivity
+			*/
 			nx_x -= next_step_x;
 			nx_y -= next_step_y;
-			*/
+
 			size_t tmp 	= next_step_x;
 			next_step_x = -next_step_y;//go right
 			next_step_y = tmp;
