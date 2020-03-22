@@ -69,6 +69,19 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 
 }
 
+void sort_contour(Contour* cnt) {
+	int cmp (const void* a, const void* b) {
+		struct point* pa = (struct point*)a;
+		struct point* pb = (struct point*)b;
+
+		if (pa->y != pb->y) 
+			return pa->y - pb->y;
+		else 
+			return pa->x - pb->x;
+	}
+	qsort(cnt->points, cnt->index, sizeof(struct point), cmp);
+}
+
 //----------------------------------------------------------------------------------------------------
 
 //COMMON FUNCTIONS
@@ -134,8 +147,8 @@ Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t s
 		Contour** 	cnts 	= malloc(sizeof(Contour**));
 		size_t 		amount 	= 0;
 
-		for (size_t i = 0; i < img->height; i += steps_y) {
-			for (size_t j = 0; j < img->width; j += steps_x) {
+		for (int i = 0; i < img->height; i += steps_y) {
+			for (int j = 0; j < img->width; j += steps_x) {
 				if (get_at(img, 0, j, i, 0) != 0 &&
 						get_at (buffer, 0, j, i, 0) == 0 &&
 						IS_BORDER(img, j, i)) { //only borders remain
@@ -223,82 +236,17 @@ struct point* get_contour_extreme(Contour* cnt) {
 }
 
 /*
-Compute area by counting how many pixels it has
-it plots the contour on a buffer and then counts in between the contour
-
-this function is NOT GUARANTEED to give the CORRECT area
-this is because some contours have noises on their boundaries
-however it gives very close result by applying a noise cleaner in the end
-
-1 marks boundary
-2 marks a pixel inside the boundary
-
-this function uses the even/odd rule to determine if it is inside or outside the shape
-it counts how many pixels are inside the boundary
-then it cleans out from the other side pixels outside the boundary
+Computing area by looking at the diffrence between pairs of points in the same y
 */
 size_t get_contour_area(Contour* cnt) {
-/*
-	size_t* x;
-	size_t* y;
+	struct point* exp = get_contour_extreme(cnt);
 
-	get_contour_extreme(cnt, x, y);
+	size_t cnt_width 	= exp[1].x - exp[3].x +1;
+	size_t cnt_height 	= exp[2].y - exp[0].y +1;
 
-	size_t contour_width	= x[1] - x[3] +1;
-	size_t contour_height 	= y[2] - y[0] +1;
-
-	Image* buffer = new_image(1, contour_width, contour_height);
-
-	if (buffer == NULL) {
-		free(x);
-		free(y);
-		
-		return 0;
-	}
-	
-	for (int i = 0; i < cnt->index; i++)
-		set_at(buffer, 0, cnt->points[i].x - x[3], cnt->points[i].y - y[0], 1);
-
-	size_t area = 0;
-
-	for (int i = 0; i < contour_height; i++) {
-		value_t last	= 0;
-		char 	count 	= 0;
-		for (int j = 0; j < contour_width; j++) {
-			value_t v = get_at(buffer, 0, j, i, 0);
-			if (v == 1) { //count border
-				area++;
-				if (last == 0) //switch mode
-					count = !count;
-			}
-			else {
-				if (count) {
-					area++;
-					if (get_at(buffer, 0, j, i, 0) != 1)
-						set_at(buffer, 0, j, i, 2);
-				}
-			}
-			last = v;
-		}
-	}
-	
-	for (int i = 0; i < contour_height; i++) {
-		for (int j = contour_width -1; j >= 0; j--) {
-			if (get_at(buffer, 0, j, i, 0) == 1)
-				break;
-			else if (get_at(buffer, 0, j, i, 0) == 2) {
-				area--;
-				set_at(buffer, 0, j, i, 0);
-			}	
-		}
-	}
-	free_image(buffer);
-	free(x);
-	free(y);
+	size_t area = cnt_height * cnt_width;
 
 	return area;
-	*/
-	return 0;
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -238,7 +238,7 @@ MAKE A MACRO TO CALCULATE MAXIMUM SIZE
 void write_rgb_pixel_map(const char* file, Image* img) {
 	FILE* f = fopen(file, "w");
 
-	fprintf(f, "P3\n%d %d %d\n", img->width, img->height, 256);
+	fprintf(f, "P3\n%d %d %d\n", img->width, img->height, MAX_VALUE +1);
 
 	if (img->channels == 3) {
 		for (int i = 0; i < img->height; i++) {
@@ -250,6 +250,7 @@ void write_rgb_pixel_map(const char* file, Image* img) {
 			}
 		}
 	}
+
 	else if (img->channels == 1) {
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
