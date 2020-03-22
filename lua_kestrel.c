@@ -13,55 +13,27 @@
 #include "contour.h"
 
 //HELPERS
-//-------------------------------------------------------------------------------
-static int get_by_index(lua_State* L, int tindex, int i) {
+//----------------------------------------------------------------------------------------------------
+
+static int get_index_integer(lua_State* L, int tindex, int i) {
 	lua_pushinteger(L, i);
 	lua_gettable(L, tindex);
 }
 
-static int lua_arth_image(lua_State* L, int (*fn)(value_t current, float x)) {
-	Image** pimg 	= (Image**)luaL_checkudata(L, 1, IMAGE_MT);
-	Image* 	new_img =  new_image((*pimg)->channels, (*pimg)->width, (*pimg)->height);
-	if (new_img == NULL)
-		return luaL_error(L, "image allocation error");
-
-	float x = luaL_checknumber(L, 2);
-
-
-	for (int i = 0; i < (*pimg)->height; i++) {
-		for (int j = 0; j < (*pimg)->width; j++) {
-			for (int c = 0; c < (*pimg)->channels; c++){
-				value_t v = get_at(*pimg, c, j, i, 0);
-				int nv = (*fn)(v, x);
-				if (nv < 0) {
-					nv = 0;
-				}
-				else if (nv > MAX_VALUE) {
-					nv = MAX_VALUE;
-				}
-				set_at(new_img, c, j, i, (value_t)nv);
-			}
-		}
-	}
-
-	Image** pnew_img = (Image**)lua_newuserdata(L, sizeof(Image*));
-	*pnew_img = new_img;
-
-	luaL_getmetatable(L, IMAGE_MT);
-	lua_setmetatable(L, -2);
+static int put_integer_in_table(lua_State* L, int i, int v) {
+	lua_pushinteger(L, i);
+	lua_pushinteger(L, v);
+	lua_settable(L, -3);
 
 }
-//-------------------------------------------------------------------------------
 
-//KESTREL
-//-------------------------------------------------------------------------------
-static int lua_new_image(lua_State* L) {
-	size_t c = luaL_checkinteger(L, 1);
-	size_t w = luaL_checkinteger(L, 2);
-	size_t h = luaL_checkinteger(L, 3);
-	
-	Image* img = new_image(c, w, h);
+static int put_number_in_table(lua_State* L, int i, float v) {
+	lua_pushinteger(L, i);
+	lua_pushnumber(L, v);
+	lua_settable(L, -3);
+}
 
+static int push_image(lua_State* L, Image* img) {
 	if (img == NULL)
 		return luaL_error(L, "image allocation error");
 
@@ -71,20 +43,20 @@ static int lua_new_image(lua_State* L) {
 
 	luaL_getmetatable(L, IMAGE_MT);
 	lua_setmetatable(L, -2);
-
-	return 1;	
 }
 
-static int lua_read_rgb_pixel_map(lua_State* L) {
-	const char* name = luaL_checkstring(L, 1);
+//----------------------------------------------------------------------------------------------------
+
+//KESTREL
+//----------------------------------------------------------------------------------------------------
+
+static int lua_new_image(lua_State* L) {
+	size_t c = luaL_checkinteger(L, 1);
+	size_t w = luaL_checkinteger(L, 2);
+	size_t h = luaL_checkinteger(L, 3);
 	
-	Image* img = read_rgb_pixel_map(name);
-
-	Image** pimg = (Image**)lua_newuserdata(L, sizeof(Image*));
-	*pimg = img;
-
-	luaL_getmetatable(L, IMAGE_MT);
-	lua_setmetatable(L, -2);
+	Image* img = new_image(c, w, h);
+	push_image(L, img);
 
 	return 1;	
 }
@@ -92,14 +64,20 @@ static int lua_read_rgb_pixel_map(lua_State* L) {
 static int lua_rgb_to_hsv(lua_State* L) {
 	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
 	Image* 	hsv 	= rgb_to_hsv(*pimg);
-	Image** phsv 	= (Image**)lua_newuserdata(L, sizeof(Image*));
 
-	*phsv = hsv;
-
-	luaL_getmetatable(L, IMAGE_MT);
-	lua_setmetatable(L, -2);
+	push_image(L, hsv);
 	
 	return 1;
+}
+
+static int lua_grayscale(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	Image* 	gray 	= grayscale(*pimg);
+
+	push_image(L, gray);
+	
+	return 1;
+
 }
 
 static int lua_open_device(lua_State* L) {
@@ -137,7 +115,9 @@ static int lua_find_contours(lua_State* L) {
 		lua_pushinteger(L, i+1);//index of contour
 
 		Contour** pcnt = (Contour**)lua_newuserdata(L, sizeof(Contour*));
+		
 		*pcnt = cnts[i];
+		
 		luaL_getmetatable(L, CONTOUR_MT);
 		lua_setmetatable(L, -2);
 
@@ -148,23 +128,22 @@ static int lua_find_contours(lua_State* L) {
 
 	return 1;
 }
-//-------------------------------------------------------------------------------
+
+static int lua_read_rgb_pixel_map(lua_State* L) {
+	const char* name = luaL_checkstring(L, 1);
+	
+	Image* img = read_rgb_pixel_map(name);
+
+	push_image(L, img);
+
+	return 1;	
+}
+
+//----------------------------------------------------------------------------------------------------
 
 
 //IMAGE
-//-------------------------------------------------------------------------------
-static int lua_set_at(lua_State* L) {
-	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
-	size_t 	c 		= luaL_checkinteger(L, 2) -1;
-	size_t 	x 		= luaL_checkinteger(L, 3) -1;
-	size_t 	y 		= luaL_checkinteger(L, 4) -1;
-	size_t 	v 		= luaL_checkinteger(L, 5);
-	if (v > MAX_VALUE)
-		v = MAX_VALUE;
-	set_at(*pimg, c, x, y, v);
-
-	return 0;
-}
+//----------------------------------------------------------------------------------------------------
 
 static int lua_get_at(lua_State* L) {
 	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
@@ -178,16 +157,21 @@ static int lua_get_at(lua_State* L) {
 	return 1;
 }
 
-static int lua_write_rgb_pixel_map(lua_State* L) {
-	Image** pimg 		= luaL_checkudata(L, 1, IMAGE_MT);
-	const char* name 	= luaL_checkstring(L, 2);
-	write_rgb_pixel_map(name, *pimg);
-	
+static int lua_set_at(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	size_t 	c 		= luaL_checkinteger(L, 2) -1;
+	size_t 	x 		= luaL_checkinteger(L, 3) -1;
+	size_t 	y 		= luaL_checkinteger(L, 4) -1;
+	size_t 	v 		= luaL_checkinteger(L, 5);
+	if (v > MAX_VALUE)
+		v = MAX_VALUE;
+	set_at(*pimg, c, x, y, v);
+
 	return 0;
 }
 
 static int lua_in_range(lua_State* L) {
-	Image** pimg	= luaL_checkudata(L, 1, IMAGE_MT);
+	Image** pimg = luaL_checkudata(L, 1, IMAGE_MT);
 
 	luaL_checktype(L, 2, LUA_TTABLE);
 	luaL_checktype(L, 3, LUA_TTABLE);
@@ -197,7 +181,6 @@ static int lua_in_range(lua_State* L) {
 
 	size_t n_lower = luaL_len(L, 2);  // size of lower table
 	size_t n_upper = luaL_len(L, 3);  // size of upper
-	
 
 	if (n_lower == n_upper && n_lower == (*pimg)->channels) {
 		value_t* lowers = calloc(n_lower, sizeof(value_t));
@@ -208,24 +191,21 @@ static int lua_in_range(lua_State* L) {
 
 		for (int i = 1; i <= n_lower; i++) {
 			//tables are at 2 and 3 pushing index to get value
-			get_by_index(L, 2, i);
+			get_index_integer(L, 2, i);
 			lowers[i-1] = lua_tointeger(L, -1);
 
-			get_by_index(L, 3, i);
+			get_index_integer(L, 3, i);
 			uppers[i-1] = lua_tointeger(L, -1);
 
 		}
-		Image** prange = (Image**)lua_newuserdata(L, sizeof(Image*));
-		*prange = in_range(*pimg, lowers, uppers, on_value, off_value);
+		Image* img = in_range(*pimg, lowers, uppers, on_value, off_value);
+		push_image(L, img);
 	
-		luaL_getmetatable(L, IMAGE_MT);
-		lua_setmetatable(L, -2);
 		return 1;
 	
 	}
 	else
 		return 0;
-		
 }
 
 static int lua_image_shape(lua_State* L) {
@@ -237,50 +217,143 @@ static int lua_image_shape(lua_State* L) {
 	return 3;
 }
 
-static int lua_add_image(lua_State* L) {
-	int add(value_t current, float x) {
-		return (int)((float)current + x);
+static int lua_image_invert(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	Image* 	invert 	= invert_image(*pimg);
+
+	push_image(L, invert);
+
+	return 1;
+}
+
+static int lua_split_channel(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	size_t 	i 		= luaL_checkinteger(L, 2) -1;
+	
+	if (i < (*pimg)->channels) {
+		push_image(L, split_channel(*pimg, i));
+		return 1;
 	}
-	lua_arth_image(L, &add);
+	else {
+		luaL_error(L, "invalid channel given");
+		return 0;
+	}
+
+}
+
+static int lua_write_rgb_pixel_map(lua_State* L) {
+	Image** pimg 		= luaL_checkudata(L, 1, IMAGE_MT);
+	const char* name 	= luaL_checkstring(L, 2);
+	write_rgb_pixel_map(name, *pimg);
+	
+	return 0;
+}
+
+static int lua_add_image(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	float 	x 		= luaL_checknumber(L, 2);
+
+	push_image(L, image_add(*pimg, x));
+	
 	return 1;
 }
 
 static int lua_sub_image(lua_State* L) {
-	int sub(value_t current, float x) {
-		return (int)((float)current - x);
-	}
-	lua_arth_image(L, &sub);
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	float 	x 		= luaL_checknumber(L, 2);
+
+	push_image(L, image_sub(*pimg, x));
+	
 	return 1;
 }
 
 static int lua_mul_image(lua_State* L) {
-	int mul(value_t current, float x) {
-		return (int)((float)current * x);
-	}
-	lua_arth_image(L, &mul);
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	float 	x 		= luaL_checknumber(L, 2);
+
+	push_image(L, image_mul(*pimg, x));
+
 	return 1;
 }
 
 static int lua_div_image(lua_State* L) {
-	int div(value_t current, float x) {
-		return (int)((float)current / x);
-	}
-	lua_arth_image(L, &div);
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	float 	x 		= luaL_checknumber(L, 2);
+
+	push_image(L, image_div(*pimg, x));
+
+	return 1;
+}
+
+static int lua_not_image(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+
+	push_image(L, image_not(*pimg));
+
+	return 1;
+}
+
+static int lua_and_image(lua_State* L) {
+	Image** pimg1 = luaL_checkudata(L, 1, IMAGE_MT);
+	Image** pimg2 = luaL_checkudata(L, 2, IMAGE_MT);
+
+	push_image(L, image_and(*pimg1, *pimg2));
+
+	return 1;
+}
+
+static int lua_or_image(lua_State* L) {
+	Image** pimg1 = luaL_checkudata(L, 1, IMAGE_MT);
+	Image** pimg2 = luaL_checkudata(L, 2, IMAGE_MT);
+
+	push_image(L, image_or(*pimg1, *pimg2));
+
+	return 1;
+}
+
+static int lua_xor_image(lua_State* L) {
+	Image** pimg1 = luaL_checkudata(L, 1, IMAGE_MT);
+	Image** pimg2 = luaL_checkudata(L, 2, IMAGE_MT);
+
+	push_image(L, image_xor(*pimg1, *pimg2));
+
+	return 1;
+}
+
+static int lua_concat_image(lua_State* L) {
+	Image** pimg1 = luaL_checkudata(L, 1, IMAGE_MT);
+	Image** pimg2 = luaL_checkudata(L, 2, IMAGE_MT);
+	
+	push_image(L, concat_channels(*pimg1, *pimg2));
+
+	return 1;
+}
+
+static int lua_eq_image(lua_State* L) {
+	Image** pimg1 = luaL_checkudata(L, 1, IMAGE_MT);
+	Image** pimg2 = luaL_checkudata(L, 2, IMAGE_MT);
+
+	char result = image_equality(*pimg1, *pimg2);
+	lua_pushboolean(L, result);
+	
 	return 1;
 }
 
 static int lua_gc_image(lua_State* L) {
 	Image** pimg = (Image**)luaL_checkudata(L, 1, IMAGE_MT);
 	free_image(*pimg);
+
 	return 0;
 }
-//-------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 
 //DEVICE
-//-------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+
 static int lua_read_frame(lua_State* L) {
-	Device** pdev = (Device**)luaL_checkudata(L, 1, DEVICE_MT);
-	Image** pimg = (Image**)lua_newuserdata(L, sizeof(Image*));
+	Device** pdev 	= (Device**)luaL_checkudata(L, 1, DEVICE_MT);
+	Image** pimg 	= (Image**)lua_newuserdata(L, sizeof(Image*));
 
 	*pimg = read_frame(*pdev);
 
@@ -290,23 +363,24 @@ static int lua_read_frame(lua_State* L) {
 	return 1;
 }
 
-static int lua_close_device(lua_State* L) {
-	Device** pdev = (Device**)luaL_checkudata(L, 1, DEVICE_MT);
-	free_device(*pdev);
-	return 0;
-}
-
-
 static int lua_device_resolution(lua_State* L) {
 	Device** pdev = (Device**)luaL_checkudata(L, 1, DEVICE_MT);
 	lua_pushinteger(L, (*pdev)->fmt->fmt.pix.width);
 	lua_pushinteger(L, (*pdev)->fmt->fmt.pix.height);
 	return 2;
 }
-//-------------------------------------------------------------------------------
+
+static int lua_close_device(lua_State* L) {
+	Device** pdev = (Device**)luaL_checkudata(L, 1, DEVICE_MT);
+	free_device(*pdev);
+
+	return 0;
+}
+
+//----------------------------------------------------------------------------------------------------
 
 //CONTOUR
-//-------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 
 static int lua_contour_center(lua_State* L) {
 	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
@@ -315,13 +389,9 @@ static int lua_contour_center(lua_State* L) {
 
 	lua_createtable(L, 2, 0);
 
-	lua_pushinteger(L, 1);//X index
-	lua_pushnumber(L, x +0.5); //adds 0.5 because lua counts from 1 --> 1 pixel /2 = 0.5
-	lua_settable(L, 2);
+	put_number_in_table(L, 1, x +0.5); //adding 0.5 because lua is offseted by 1
+	put_number_in_table(L, 2, y +0.5);
 
-	lua_pushinteger(L, 2);//X index
-	lua_pushnumber(L, y +0.5);
-	lua_settable(L, 2);
 	return 1;
 }
 
@@ -333,51 +403,42 @@ static int lua_contour_to_table(lua_State* L) {
 		lua_pushinteger(L, i+1);//index
 
 		lua_createtable(L, 2, 0);
-		lua_pushinteger(L, 1);//X index
-		lua_pushinteger(L, (*pcnt)->points[i].x +1);
-		lua_settable(L, -3);
+		put_integer_in_table(L, 1, (*pcnt)->points[i].x +1);
 
-		lua_pushinteger(L, 2);//Y index
-		lua_pushinteger(L, (*pcnt)->points[i].y +1);
-		lua_settable(L, -3);
+		put_integer_in_table(L, 2, (*pcnt)->points[i].y +1);
 		
 		lua_settable(L, -3);
 	}
+
 	return 1;
 }
 
 static int lua_contour_extreme_points(lua_State* L) {
-	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
+	Contour** pcnt 	= (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
 
-	size_t* x = calloc(4, sizeof(size_t));
-	size_t* y = calloc(4, sizeof(size_t));
-
-	get_contour_extreme(*pcnt, x, y);
+	struct point* p = get_contour_extreme(*pcnt);
 
 	lua_createtable(L, 4, 1);
 	for (int i = 0; i < 4; i++) {
-		lua_pushinteger(L, i+1);//index
+		lua_pushinteger(L, i +1);//index
 
 		lua_createtable(L, 2, 0);
-
-		lua_pushinteger(L, 1);//X index
-		lua_pushinteger(L, x[i] +1);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 2);//Y index
-		lua_pushinteger(L, y[i] +1);
-		lua_settable(L, -3);
 		
+		put_integer_in_table(L, 1, p[i].x +1);
+
+		put_integer_in_table(L, 2, p[i].y +1);
+
 		lua_settable(L, -3);
 	}
-	free(x);
-	free(y);
+	free(p);
+
 	return 1;
 }
 
 static int lua_contour_area(lua_State* L) {
 	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
 	lua_pushinteger(L, get_contour_area(*pcnt));
+
 	return 1;
 
 }
@@ -385,19 +446,23 @@ static int lua_contour_area(lua_State* L) {
 static int lua_gc_contour(lua_State* L) {
 	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
 	free_contour(*pcnt);
+
 	return 0;
 }
-//-------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 
 //LUA
-//-------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+
 int LUA_API luaopen_kestrel(lua_State* L) {
 	const luaL_Reg lib[] = {
 		{"newimage",			lua_new_image},
-		{"read_rgb_pixelmap",	lua_read_rgb_pixel_map},
 		{"rgb_to_hsv", 			lua_rgb_to_hsv},
+		{"grayscale", 			lua_grayscale},
 		{"opendevice",			lua_open_device},
 		{"findcontours",		lua_find_contours},
+		{"read_rgb_pixelmap",	lua_read_rgb_pixel_map},
 		{NULL, NULL},
 	};
 
@@ -405,13 +470,21 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 		const luaL_Reg image_funcs[] = {
 				{"getat", 				lua_get_at},
 				{"setat", 				lua_set_at},
-				{"write_rgb_pixelmap", 	lua_write_rgb_pixel_map},
 				{"inrange", 			lua_in_range},
 				{"shape", 				lua_image_shape},
+				{"invert", 				lua_image_invert},
+				{"splitchannel", 		lua_split_channel},
+				{"write_rgb_pixelmap", 	lua_write_rgb_pixel_map},
 				{"__add", 				lua_add_image},
 				{"__sub", 				lua_sub_image},
 				{"__mul", 				lua_mul_image},
 				{"__div", 				lua_div_image},
+				{"__bnot", 				lua_not_image},
+				{"__band", 				lua_and_image},
+				{"__bor", 				lua_or_image},
+				{"__bxor", 				lua_xor_image},
+				{"__concat", 			lua_concat_image},
+				{"__eq", 				lua_eq_image},
 				{"__gc", 				lua_gc_image},
 				{NULL, NULL},
 			};
@@ -425,8 +498,8 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 	if (luaL_newmetatable(L, DEVICE_MT)) {
 		const luaL_Reg device_funcs[] = {
 				{"readframe", 	lua_read_frame},
-				{"close", 		lua_close_device},
 				{"resolution", 	lua_device_resolution},
+				{"close", 		lua_close_device},
 				{NULL, NULL},
 			};
 		luaL_setfuncs(L, device_funcs, 0);
@@ -454,6 +527,8 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 
 	lua_createtable(L, sizeof(lib) / sizeof(lib[0]), 0);
 	luaL_setfuncs(L, lib, 0);
+
 	return 1;
 }
-//-------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------

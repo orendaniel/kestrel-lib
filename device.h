@@ -29,8 +29,14 @@ typedef struct {
 	Buffer*							buffers;
 } Device;
 
-Device*			new_device(const char* name, size_t width, size_t height);
-Image*			read_frame(Device* dev);
-void			free_device(Device* dev);
+
+//DEVICE FUNCTIONS
+//----------------------------------------------------------------------------------------------------
+
+Device*		new_device(const char* name, size_t width, size_t height);
+Image*		read_frame(Device* dev);
+void		free_device(Device* dev);
+
+//----------------------------------------------------------------------------------------------------
 
 #endif

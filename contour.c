@@ -5,9 +5,8 @@
 	get_at(IMAGE, 0, X-1, Y, 0) && \
 	get_at(IMAGE, 0, X, Y-1, 0))
 
-int cmp_size_t(const void* a, const void* b) {
-	return *(size_t*)a - *(size_t*)b;
-}	
+//HELPERS
+//----------------------------------------------------------------------------------------------------
 
 Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	Contour* cnt = new_contour();
@@ -69,6 +68,11 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	}
 
 }
+
+//----------------------------------------------------------------------------------------------------
+
+//COMMON FUNCTIONS
+//----------------------------------------------------------------------------------------------------
 
 Contour* new_contour() {
 	size_t size = CONTOUR_ALLOCATION_SIZE;
@@ -161,6 +165,11 @@ Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t s
 	}
 }
 
+//----------------------------------------------------------------------------------------------------
+
+//CONTOUR CALCULATION
+//----------------------------------------------------------------------------------------------------
+
 void contour_center(Contour* cnt, float* x, float* y) {
 	float sum_x = 0;
 	float sum_y = 0;
@@ -174,41 +183,43 @@ void contour_center(Contour* cnt, float* x, float* y) {
 
 /*
 return the extrem points of a contour
-assumes 2 arrays with size 4
 order N E S W
 */
-void get_contour_extreme(Contour* cnt, size_t* x, size_t* y) {
+struct point* get_contour_extreme(Contour* cnt) {
+	struct point* result = calloc(4, sizeof(struct point));
 
-	for (int i = 0; i < 4; i++){
-		x[i] = cnt->points[0].x;
-		y[i] = cnt->points[1].y;
+	for (int i = 0; i < 4; i++) {
+		result[i].x = cnt->points[0].x;
+		result[i].y = cnt->points[1].y;
 	}
 	
 	//remeber that y up --> down
-	for (int i = 0; i < cnt->index; i++){
-		if (y[0] > cnt->points[i].y) {//found N
-			x[0] = cnt->points[i].x;
-			y[0] = cnt->points[i].y;
+	for (int i = 0; i < cnt->index; i++) {
+		if (result[0].y > cnt->points[i].y) {//found N
+			result[0].x = cnt->points[i].x;
+			result[0].y = cnt->points[i].y;
 		}
 
-		if (x[1] < cnt->points[i].x) {//found E
-			x[1] = cnt->points[i].x;
-			y[1] = cnt->points[i].y;
+		if (result[1].x < cnt->points[i].x) {//found E
+			result[1].x = cnt->points[i].x;
+			result[1].y = cnt->points[i].y;
 			
 		}
 
-		if (y[2] < cnt->points[i].y) {//found S
-			x[2] = cnt->points[i].x;
-			y[2] = cnt->points[i].y;
+		if (result[2].y < cnt->points[i].y) {//found S
+			result[2].x = cnt->points[i].x;
+			result[2].y = cnt->points[i].y;
 		
 		}
 
-		if (x[3] > cnt->points[i].x) {//found W
-			x[3] = cnt->points[i].x;
-			y[3] = cnt->points[i].y;
+		if (result[3].x > cnt->points[i].x) {//found W
+			result[3].x = cnt->points[i].x;
+			result[3].y = cnt->points[i].y;
 		
 		}
 	}
+
+	return result;
 }
 
 /*
@@ -227,13 +238,14 @@ it counts how many pixels are inside the boundary
 then it cleans out from the other side pixels outside the boundary
 */
 size_t get_contour_area(Contour* cnt) {
-	size_t* x = calloc(4, sizeof(size_t));
-	size_t* y = calloc(4, sizeof(size_t));
+/*
+	size_t* x;
+	size_t* y;
 
 	get_contour_extreme(cnt, x, y);
 
-	size_t contour_width	= x[1] - x[3]+1;
-	size_t contour_height 	= y[2] - y[0]+1;
+	size_t contour_width	= x[1] - x[3] +1;
+	size_t contour_height 	= y[2] - y[0] +1;
 
 	Image* buffer = new_image(1, contour_width, contour_height);
 
@@ -285,5 +297,8 @@ size_t get_contour_area(Contour* cnt) {
 	free(y);
 
 	return area;
+	*/
+	return 0;
 }
 
+//----------------------------------------------------------------------------------------------------

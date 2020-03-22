@@ -5,6 +5,9 @@ Communication with v4l
 please refer to v4l and libv4l documentation
 */
 
+//XIOCTL
+//----------------------------------------------------------------------------------------------------
+
 static void	xioctl(int fh, int request, void* arg) {
 	int r;
 
@@ -23,6 +26,11 @@ void free_buffer(Buffer* bff) {
 	free(bff);
 }
 
+//----------------------------------------------------------------------------------------------------
+
+
+//DEVICE FUNCTIONS
+//----------------------------------------------------------------------------------------------------
 
 Device*	new_device(const char* name, size_t width, size_t height) {
 	Device* dev = calloc(1, sizeof(Device));
@@ -155,3 +163,4 @@ void free_device(Device* dev) {
 	free(dev);
 }
 
+//----------------------------------------------------------------------------------------------------

@@ -1,5 +1,56 @@
 #include "image.h"
 
+//HELPERS
+//----------------------------------------------------------------------------------------------------
+Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_t b)) {
+	if (img1->channels == 1 && img2->channels == 1) {
+		size_t width 	= MAX(img1->width, img2->width);	
+		size_t height 	= MAX(img1->height, img2->height);	
+		Image* result 	= new_image(1, width, height);
+
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++)
+				set_at(result, 0, i, j, (*fn)(get_at(img1, 0, j, i, 0), get_at(img2, 0, j, i, 0)));
+		}
+		return result;
+	}
+	else {
+		fprintf(stderr, "bitwise operation for binary images only\n");
+		return NULL;
+	}
+}
+
+Image* arth_operation(Image* img, int (*fn)(value_t value, float x), float x) {
+	Image* result = new_image(img->channels, img->width, img->height);
+
+	if (result == NULL)
+		return NULL;
+
+	for (int i = 0; i < img->height; i++) {
+		for (int j = 0; j < img->width; j++) {
+			for (int c = 0; c < img->channels; c++){
+				value_t v = get_at(img, c, j, i, 0);
+				int nv = (*fn)(v, x);
+
+				if (nv < 0) 
+					nv = 0;
+
+				else if (nv > MAX_VALUE) 
+					nv = MAX_VALUE;
+
+				set_at(result, c, j, i, (value_t)nv);
+			}
+		}
+	}
+
+	return result;
+}
+
+//----------------------------------------------------------------------------------------------------
+
+//COMMON FUNCTIONS
+//----------------------------------------------------------------------------------------------------
+
 Image* new_image(size_t channels, size_t width, size_t height) {
 	value_t* data = calloc(width * height * channels, sizeof(value_t));
 	if (data) {
@@ -14,6 +65,11 @@ Image* new_image(size_t channels, size_t width, size_t height) {
 		fprintf(stderr, "Cannot allocate image\n");
 		return NULL;
 	}
+}
+
+void free_image(Image* img) {
+	free(img->data);
+	free(img);
 }
 
 /*
@@ -45,71 +101,19 @@ void set_at(Image* img, size_t chnl, size_t x, size_t y, value_t value) {
 		img->data[index] = value;
 }
 
-
-void free_image(Image* img) {
-	free(img->data);
-	free(img);
-}
-
-
-/*
-DO ERROR HANDLING FOR READ/WRITE
-MAKE A MACRO TO CALCULATE MAXIMUM SIZE
-*/
-void write_rgb_pixel_map(const char* file, Image* img) {
-	FILE* f = fopen(file, "w");
-
-	fprintf(f, "P3\n%d %d %d\n", img->width, img->height, 256);
-
-	if (img->channels == 3) {
+Image* split_channel(Image* img, size_t c) {
+	if (c < img->channels) {
+		Image* result = new_image(1, img->width, img->height);
 		for (int i = 0; i < img->height; i++) {
-			for (int j = 0; j < img->width; j++) {
-				fprintf(f, "%d %d %d\n", 
-					get_at(img, 0, j, i, -1), //red channel
-					get_at(img, 1, j, i, -1), //blue channel
-					get_at(img, 2, j, i, -1)); //green channel
-			}
+			for (int j = 0; j < img->width; j++) 
+				set_at(result, 0, j, i, get_at(img, c, j, i, 0));
 		}
+		return result;
 	}
-	else if (img->channels == 1) {
-		for (int i = 0; i < img->height; i++) {
-			for (int j = 0; j < img->width; j++) {
-				fprintf(f, "%d %d %d\n", 
-					get_at(img, 0, j, i, -1), //red channel
-					get_at(img, 0, j, i, -1), //blue channel
-					get_at(img, 0, j, i, -1)); //green channel
-			}
-		}
+	else {
+		fprintf(stderr, "channel given does not exsits in image\n");
+		return NULL;
 	}
-	else
-		fprintf(stderr, "Must have only R G B channels or grayscale to write image\n");
-
-	fclose(f);
-}
-
-/*
-Currently ignore deviating formats and max value
-*/
-Image* read_rgb_pixel_map(const char* file) {
-	FILE* f = fopen(file, "r");
-
-	size_t width, height, max_value;
-	
-	fscanf(f, "%d %d %d\n", &width, &height, &max_value);
-	Image* img = new_image(3, width, height);
-
-	for (int i = 0; i < img->height; i++) {
-		for (int j = 0; j < img->width; j++) {
-			value_t r, b, g;
-			fscanf(f, "%d %d %d\n", &r, &g, &b);
-			set_at(img, 0, j, i, r), //red channel
-			set_at(img, 1, j, i, g), //blue channel
-			set_at(img, 2, j, i, b); //green channel
-		}
-	}
-
-	fclose(f);
-	return img;
 }
 
 /*
@@ -183,3 +187,220 @@ Image* rgb_to_hsv(Image* img) {
 		return NULL;
 	}
 }
+
+Image* grayscale(Image* img) {
+	Image* result 		= new_image(1, img->width, img->height);
+	size_t chnls_amount = img->channels;
+
+	if (result) {
+		for (int i = 0; i < img->height; i++) {
+			for (int j = 0; j < img->width; j++) {
+				int sum = 0;
+				for (int c = 0; c < chnls_amount; c++)
+					sum += get_at(img, c, j, i, 0);
+					
+				set_at(result, 0, j, i, sum/chnls_amount);
+			}
+		}
+		
+		return result;
+	}
+	else
+		return NULL;
+}
+
+Image* invert_image(Image* img) {
+	Image* result = new_image(img->channels, img->width, img->height);
+
+	if (result) {
+		for (int i = 0; i < img->height; i++) {
+			for (int j = 0; j < img->width; j++) {
+				for (int c = 0; c < img->channels; c++)
+					set_at(result, c, j, i, MAX_VALUE - get_at(img, c, j, i, 0));
+			}
+		}
+		
+		return result;
+	}
+	else
+		return NULL;
+}
+
+//----------------------------------------------------------------------------------------------------
+
+//I/O FUNCTIONS
+//----------------------------------------------------------------------------------------------------
+
+/*
+DO ERROR HANDLING FOR READ/WRITE
+MAKE A MACRO TO CALCULATE MAXIMUM SIZE
+*/
+void write_rgb_pixel_map(const char* file, Image* img) {
+	FILE* f = fopen(file, "w");
+
+	fprintf(f, "P3\n%d %d %d\n", img->width, img->height, 256);
+
+	if (img->channels == 3) {
+		for (int i = 0; i < img->height; i++) {
+			for (int j = 0; j < img->width; j++) {
+				fprintf(f, "%d %d %d\n", 
+					get_at(img, 0, j, i, -1), //red channel
+					get_at(img, 1, j, i, -1), //blue channel
+					get_at(img, 2, j, i, -1)); //green channel
+			}
+		}
+	}
+	else if (img->channels == 1) {
+		for (int i = 0; i < img->height; i++) {
+			for (int j = 0; j < img->width; j++) {
+				fprintf(f, "%d %d %d\n", 
+					get_at(img, 0, j, i, -1), //red channel
+					get_at(img, 0, j, i, -1), //blue channel
+					get_at(img, 0, j, i, -1)); //green channel
+			}
+		}
+	}
+	else
+		fprintf(stderr, "Must have only R G B channels or grayscale to write image\n");
+
+	fclose(f);
+}
+
+/*
+Currently ignore deviating formats and max value
+*/
+Image* read_rgb_pixel_map(const char* file) {
+	FILE* f = fopen(file, "r");
+
+	size_t width, height, max_value;
+	
+	fscanf(f, "%d %d %d\n", &width, &height, &max_value);
+	Image* img = new_image(3, width, height);
+
+	for (int i = 0; i < img->height; i++) {
+		for (int j = 0; j < img->width; j++) {
+			value_t r, b, g;
+			fscanf(f, "%d %d %d\n", &r, &g, &b);
+			set_at(img, 0, j, i, r), //red channel
+			set_at(img, 1, j, i, g), //blue channel
+			set_at(img, 2, j, i, b); //green channel
+		}
+	}
+
+	fclose(f);
+	return img;
+}
+
+//----------------------------------------------------------------------------------------------------
+
+//IMAGE OPERATORS
+//----------------------------------------------------------------------------------------------------
+
+char image_equality(Image* img1, Image* img2) {
+	if (img1->channels == img2->channels &&
+		img1->width == img2->width &&
+		img1->height == img2->height) {
+		
+		for (int i = 0; i < img1->height; i++) {
+			for (int j = 0; j < img1->height; j++) {
+				for (int c = 0; c < img1->channels; c++) 
+					if (get_at(img1, c, j, i, 0) != get_at(img2, c, j, i, 0))
+						return 0;
+			}
+		}
+		return 1;
+	}
+	else
+		return 0;
+
+}
+
+Image* concat_channels(Image* img1, Image* img2) {
+	size_t max_width 	= MAX(img1->width, img2->width);
+	size_t max_height 	= MAX(img1->height, img2->height);
+	size_t channels 	= img1->channels + img2->channels;
+	Image* result 		= new_image(channels, max_width, max_height);
+
+	if(result == NULL)
+		return NULL;
+
+	for (int i = 0; i < max_height; i++) {
+		for (int j = 0; j < max_width; j++){
+			for (int c = 0; c < img1->channels; c++) 
+				set_at(result, c, j, i, get_at(img1, c, j, i, 0));
+
+			for (int c = 0; c < img2->channels; c++) 
+				set_at(result, img1->channels + c, j, i, get_at(img2, c, j, i, 0));
+
+		}
+	}
+
+	return result;
+}
+
+Image* image_add(Image* img, float x) {
+	int add(value_t current, float x) {
+		return (int)((float)current + x);
+	}
+	arth_operation(img, &add, x);
+}
+
+Image* image_sub(Image* img, float x) {
+	int sub(value_t current, float x) {
+		return (int)((float)current - x);
+	}
+	arth_operation(img, &sub, x);
+}
+
+Image* image_mul(Image* img, float x) {
+	int mul(value_t current, float x) {
+		return (int)((float)current * x);
+	}
+	arth_operation(img, &mul, x);
+}
+
+Image* image_div(Image* img, float x) {
+	int div(value_t current, float x) {
+		return (int)((float)current / x);
+	}
+	arth_operation(img, &div, x);
+}
+
+Image* image_not(Image* img) {
+	if (img->channels == 1) {
+		Image* result = new_image(img->channels, img->width, img->height);
+		if (result == NULL)
+			return NULL;
+		for (int i = 0; i < img->height; i++) {
+			for (int j = 0; j < img->width; j++)
+				set_at(result, 0, j, i, !get_at(img, 0, j, i, 0));
+		}
+		return result;
+	}
+	else {
+		fprintf(stderr, "bitwise operation for binary images only\n");
+		return NULL;
+	}
+}
+
+Image* image_and(Image* img1, Image* img2) {
+	value_t and(value_t a, value_t b) {
+		return a && b;
+	}
+	return logic_operation(img1, img2, &and);
+}
+
+Image* image_or(Image* img1, Image* img2) {
+	value_t or(value_t a, value_t b) {
+		return a || b;
+	}
+	return logic_operation(img1, img2, &or);
+}
+
+Image* image_xor(Image* img1, Image* img2) {
+	value_t xor(value_t a, value_t b) {
+		return (!a && b) || (a && !b);
+	}
+	return logic_operation(img1, img2, &xor);
+}
+//----------------------------------------------------------------------------------------------------
