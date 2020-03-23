@@ -28,8 +28,8 @@ Image* 		invert_image(Image* img);
 //IO
 //----------------------------------------------------------------------------------------------------
 
-void 	write_rgb_pixel_map(const char* file, Image* img);
-Image* 	read_rgb_pixel_map(const char* file);
+void 	write_pixel_map(const char* file, Image* img);
+Image* 	read_pixel_map(const char* file);
 
 //----------------------------------------------------------------------------------------------------
 

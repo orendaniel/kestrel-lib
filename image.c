@@ -235,7 +235,7 @@ Image* invert_image(Image* img) {
 //I/O FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-void write_rgb_pixel_map(const char* file, Image* img) {
+void write_pixel_map(const char* file, Image* img) {
 	FILE* f = fopen(file, "w");
 
 
@@ -266,41 +266,42 @@ void write_rgb_pixel_map(const char* file, Image* img) {
 }
 
 /*
-Currently ignore deviating formats and max value
+TODO
+comments ignore
+and line break
 */
-Image* read_rgb_pixel_map(const char* file) {
+Image* read_pixel_map(const char* file) {
 	FILE* f = fopen(file, "r");
 	size_t width, height, max_value;
 
-	Image* result = new_image(1, 10, 10);
+	Image* result = NULL;
 
-	char type;
+	char str[2];
 
-	fscanf(f, "P%d\n", &type);
-	printf("%d\n", type);
+	fscanf(f, "%s\n", str);
+	fscanf(f, "%d %d %d\n", &width, &height, &max_value);
 
-	if (type == 3) {
-		fscanf(f, "%d %d %d", &width, &height, &max_value);
-		result = new_image(3, width, height);
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++) {
-				value_t r, g, b;
-				fscanf(f, "%d %d %d", &r, &g, &b);
-				set_at(result, 0, j, i, r); //red channel 
-				set_at(result, 1, j, i, g); //green channel
-				set_at(result, 2, j, i, b); //blue channel
-			}
-		}
-	}
-
-	else if (type == 2) {
-		fscanf(f, "%d %d %d", &width, &height, &max_value);
+	if (strcmp(str, "P2") == 0) {
 		result = new_image(1, width, height);
+
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
 				value_t gray;
-				fscanf(f, "%d", &gray);
+				fscanf(f, "%d\n", &gray);
 				set_at(result, 0, j, i, gray);
+			}
+		}
+	}
+	else if (strcmp(str, "P3") == 0) {
+		result = new_image(3, width, height);
+
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				value_t r, g, b;
+				fscanf(f, "%d %d %d\n", &r, &g, &b);
+				set_at(result, 0, j, i, r);
+				set_at(result, 1, j, i, g);
+				set_at(result, 2, j, i, b);
 			}
 		}
 	}

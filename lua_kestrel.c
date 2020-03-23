@@ -129,11 +129,18 @@ static int lua_find_contours(lua_State* L) {
 	return 1;
 }
 
-static int lua_read_rgb_pixel_map(lua_State* L) {
+static int lua_write_pixel_map(lua_State* L) {
+	Image** pimg 		= luaL_checkudata(L, 1, IMAGE_MT);
+	const char* name 	= luaL_checkstring(L, 2);
+	write_pixel_map(name, *pimg);
+	
+	return 0;
+}
+
+static int lua_read_pixel_map(lua_State* L) {
 	const char* name = luaL_checkstring(L, 1);
 	
-	Image* img = read_rgb_pixel_map(name);
-	//printf("%d", img);
+	Image* img = read_pixel_map(name);
 	push_image(L, img);
 
 	return 1;	
@@ -239,14 +246,6 @@ static int lua_split_channel(lua_State* L) {
 		return 0;
 	}
 
-}
-
-static int lua_write_rgb_pixel_map(lua_State* L) {
-	Image** pimg 		= luaL_checkudata(L, 1, IMAGE_MT);
-	const char* name 	= luaL_checkstring(L, 2);
-	write_rgb_pixel_map(name, *pimg);
-	
-	return 0;
 }
 
 static int lua_add_image(lua_State* L) {
@@ -482,7 +481,8 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 		{"grayscale", 			lua_grayscale},
 		{"opendevice",			lua_open_device},
 		{"findcontours",		lua_find_contours},
-		{"read_rgb_pixelmap",	lua_read_rgb_pixel_map},
+		{"write_pixelmap", 		lua_write_pixel_map},
+		{"read_pixelmap",		lua_read_pixel_map},
 		{NULL, NULL},
 	};
 
@@ -494,7 +494,6 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 				{"shape", 				lua_image_shape},
 				{"invert", 				lua_image_invert},
 				{"splitchannel", 		lua_split_channel},
-				{"write_rgb_pixelmap", 	lua_write_rgb_pixel_map},
 				{"__add", 				lua_add_image},
 				{"__sub", 				lua_sub_image},
 				{"__mul", 				lua_mul_image},
