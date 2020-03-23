@@ -86,8 +86,10 @@ value_t get_at(Image* img, size_t chnl, size_t x, size_t y, value_t def_value) {
 
 		return img->data[index];
 
-	else 
+	else  {
 		return def_value;
+		fprintf(stderr, "out of bounds\n");
+	}
 
 }
 
@@ -99,6 +101,8 @@ void set_at(Image* img, size_t chnl, size_t x, size_t y, value_t value) {
 			chnl < img->channels && chnl >= 0)
 
 		img->data[index] = value;
+	else
+		fprintf(stderr, "out of bounds\n");
 }
 
 Image* split_channel(Image* img, size_t c) {
@@ -231,33 +235,27 @@ Image* invert_image(Image* img) {
 //I/O FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-/*
-DO ERROR HANDLING FOR READ/WRITE
-MAKE A MACRO TO CALCULATE MAXIMUM SIZE
-*/
 void write_rgb_pixel_map(const char* file, Image* img) {
 	FILE* f = fopen(file, "w");
 
-	fprintf(f, "P3\n%d %d %d\n", img->width, img->height, MAX_VALUE +1);
 
-	if (img->channels == 3) {
+	if (img->channels == 3) { //RGB image
+		fprintf(f, "P3\n%d %d %d\n", img->width, img->height, MAX_VALUE);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
 				fprintf(f, "%d %d %d\n", 
-					get_at(img, 0, j, i, -1), //red channel
-					get_at(img, 1, j, i, -1), //blue channel
-					get_at(img, 2, j, i, -1)); //green channel
+					get_at(img, 0, j, i, 0), //red channel
+					get_at(img, 1, j, i, 0), //green channel
+					get_at(img, 2, j, i, 0)); //blue channel
 			}
 		}
 	}
 
-	else if (img->channels == 1) {
+	else if (img->channels == 1) { //grayscale image
+		fprintf(f, "P2\n%d %d %d\n", img->width, img->height, MAX_VALUE);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
-				fprintf(f, "%d %d %d\n", 
-					get_at(img, 0, j, i, -1), //red channel
-					get_at(img, 0, j, i, -1), //blue channel
-					get_at(img, 0, j, i, -1)); //green channel
+				fprintf(f, "%d\n", get_at(img, 0, j, i, 0));
 			}
 		}
 	}
@@ -272,24 +270,45 @@ Currently ignore deviating formats and max value
 */
 Image* read_rgb_pixel_map(const char* file) {
 	FILE* f = fopen(file, "r");
-
 	size_t width, height, max_value;
-	
-	fscanf(f, "%d %d %d\n", &width, &height, &max_value);
-	Image* img = new_image(3, width, height);
 
-	for (int i = 0; i < img->height; i++) {
-		for (int j = 0; j < img->width; j++) {
-			value_t r, b, g;
-			fscanf(f, "%d %d %d\n", &r, &g, &b);
-			set_at(img, 0, j, i, r), //red channel
-			set_at(img, 1, j, i, g), //blue channel
-			set_at(img, 2, j, i, b); //green channel
+	Image* result = new_image(1, 10, 10);
+
+	char type;
+
+	fscanf(f, "P%d\n", &type);
+	printf("%d\n", type);
+
+	if (type == 3) {
+		fscanf(f, "%d %d %d", &width, &height, &max_value);
+		result = new_image(3, width, height);
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				value_t r, g, b;
+				fscanf(f, "%d %d %d", &r, &g, &b);
+				set_at(result, 0, j, i, r); //red channel 
+				set_at(result, 1, j, i, g); //green channel
+				set_at(result, 2, j, i, b); //blue channel
+			}
 		}
 	}
 
+	else if (type == 2) {
+		fscanf(f, "%d %d %d", &width, &height, &max_value);
+		result = new_image(1, width, height);
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				value_t gray;
+				fscanf(f, "%d", &gray);
+				set_at(result, 0, j, i, gray);
+			}
+		}
+	}
+	else
+		fprintf(stderr, "P3 or P2 only\n");
+
 	fclose(f);
-	return img;
+	return result;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -404,4 +423,5 @@ Image* image_xor(Image* img1, Image* img2) {
 	}
 	return logic_operation(img1, img2, &xor);
 }
+
 //----------------------------------------------------------------------------------------------------

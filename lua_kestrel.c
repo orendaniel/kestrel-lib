@@ -133,7 +133,7 @@ static int lua_read_rgb_pixel_map(lua_State* L) {
 	const char* name = luaL_checkstring(L, 1);
 	
 	Image* img = read_rgb_pixel_map(name);
-
+	//printf("%d", img);
 	push_image(L, img);
 
 	return 1;	
@@ -435,11 +435,31 @@ static int lua_contour_extreme_points(lua_State* L) {
 	return 1;
 }
 
+static int lua_contour_perimeter(lua_State* L) {
+	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
+	lua_pushinteger(L, (*pcnt)->index);
+
+	return 1;
+
+}
+
 static int lua_contour_area(lua_State* L) {
 	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
 	lua_pushinteger(L, get_contour_area(*pcnt));
 
 	return 1;
+
+}
+
+static int lua_contour_fit_line(lua_State* L) {
+	Contour** pcnt = (Contour**)luaL_checkudata(L, 1, CONTOUR_MT);
+	float m;
+	float b;
+	fit_line(*pcnt, &m, &b);
+	lua_pushnumber(L, m);
+	lua_pushnumber(L, b +0.5);//add lua offset
+
+	return 2;
 
 }
 
@@ -514,7 +534,9 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 				{"center",		lua_contour_center},
 				{"totable",		lua_contour_to_table},
 				{"extreme",		lua_contour_extreme_points},
+				{"perimeter",	lua_contour_perimeter},
 				{"area",		lua_contour_area},
+				{"fitline",		lua_contour_fit_line},
 				{"__gc",		lua_gc_contour},
 				{NULL, NULL},
 			};

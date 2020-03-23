@@ -69,7 +69,7 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 
 }
 
-void sort_contour(Contour* cnt) {
+void sort_contour_by_y(Contour* cnt) {
 	int cmp (const void* a, const void* b) {
 		struct point* pa = (struct point*)a;
 		struct point* pb = (struct point*)b;
@@ -78,6 +78,19 @@ void sort_contour(Contour* cnt) {
 			return pa->y - pb->y;
 		else 
 			return pa->x - pb->x;
+	}
+	qsort(cnt->points, cnt->index, sizeof(struct point), cmp);
+}
+
+void sort_contour_by_x(Contour* cnt) {
+	int cmp (const void* a, const void* b) {
+		struct point* pa = (struct point*)a;
+		struct point* pb = (struct point*)b;
+
+		if (pa->x != pb->x) 
+			return pa->x - pb->x;
+		else 
+			return pa->y - pb->y;
 	}
 	qsort(cnt->points, cnt->index, sizeof(struct point), cmp);
 }
@@ -236,17 +249,93 @@ struct point* get_contour_extreme(Contour* cnt) {
 }
 
 /*
-Computing area by looking at the diffrence between pairs of points in the same y
+Calculate the OUTER AREA of contour NOT area inside the boundary
+
+this is done by plotting the contour on a buffer
+and subtracting the pixels that are outside the contour
 */
 size_t get_contour_area(Contour* cnt) {
 	struct point* exp = get_contour_extreme(cnt);
 
-	size_t cnt_width 	= exp[1].x - exp[3].x +1;
-	size_t cnt_height 	= exp[2].y - exp[0].y +1;
+	size_t cnt_w = exp[1].x - exp[3].x +1;
+	size_t cnt_h = exp[2].y - exp[0].y +1;
 
-	size_t area = cnt_height * cnt_width;
 
-	return area;
+	Image* buffer = new_image(1, cnt_w, cnt_h);
+
+	for (int i = 0; i < cnt->index; i++)
+		set_at(buffer, 0, cnt->points[i].x -exp[3].x, cnt->points[i].y -exp[0].y, 1);
+
+	size_t count = 0;
+	for (int i = 0; i < cnt_h; i++) {
+		for (int j = 0; j < cnt_w; j++) {
+			if (get_at(buffer, 0, j, i, 0) == 1)
+				break;
+			else if (get_at(buffer, 0, j, i, 0) == 0) {
+				set_at(buffer, 0, j, i, 2); 
+				count++;
+			}
+		}
+
+		for (int j = cnt_w -1; j >= 0; j--) {
+			if (get_at(buffer, 0, j, i, 0) == 1)
+				break;
+			else if (get_at(buffer, 0, j, i, 0) == 0) {
+				set_at(buffer, 0, j, i, 2); 
+				count++;
+			}
+		}
+	}
+
+	for (int j = 0; j < cnt_w; j++) {
+		for (int i = 0; i < cnt_h; i++) {
+			if (get_at(buffer, 0, j, i, 0) == 1)
+				break;
+			else if (get_at(buffer, 0, j, i, 0) == 0) {
+				set_at(buffer, 0, j, i, 2); 
+				count++;
+			}
+		}
+
+		for (int i = cnt_h -1; i >= 0; i--) {
+			if (get_at(buffer, 0, j, i, 0) == 1)
+				break;
+			else if (get_at(buffer, 0, j, i, 0) == 0) {
+				set_at(buffer, 0, j, i, 2); 
+				count++;
+			}
+		}
+	}
+
+	int area = cnt_h*cnt_w - count;
+
+	free(buffer);
+	free(exp);
+	if (area > 0)
+		return area;
+	else {
+		fprintf(stderr, "error calculating area\n");
+		return 0;
+	}
+}
+
+void fit_line(Contour* cnt, float* m, float* b) {
+	float sum_x 	= 0;
+	float sum_y 	= 0; 
+	float sum_xy 	= 0;
+	float sum_x2 	= 0; 
+
+	for (int i = 0; i < cnt->index; i++) { 
+		sum_x 	+= cnt->points[i].x; 
+		sum_y 	+= cnt->points[i].y; 
+		sum_xy 	+= cnt->points[i].x * cnt->points[i].y; 
+		sum_x2 	+= (cnt->points[i].x * cnt->points[i].x); 
+	} 
+
+	*m = (cnt->index * sum_xy - sum_x * sum_y) / (cnt->index * sum_x2 - (sum_x * sum_x)); 
+	*b = (sum_y - (*m) * sum_x) / cnt->index; 
+
+	
 }
 
 //----------------------------------------------------------------------------------------------------
