@@ -102,9 +102,7 @@ static int lua_open_device(lua_State* L) {
 	Device* 	dev 	= new_device(path, width, height);
 
 	if (dev == NULL)
-		return luaL_error(L, "error opening device");
-	if (dev->fd < 0)
-		return luaL_error(L, "device in use");
+		return 0;
 		
 	Device** pdev = (Device**)lua_newuserdata(L, sizeof(Device*));
 

@@ -55,7 +55,7 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 
 	dev->fd = v4l2_open(name, O_RDWR | O_NONBLOCK, 0);
 	if (dev->fd < 0) {
-		perror("Unable to open device");
+		fprintf(stderr, "Unable to open device at %s\n", name);
 		return NULL;
 	}
 
