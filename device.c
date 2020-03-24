@@ -5,7 +5,7 @@ Communication with v4l
 please refer to v4l and libv4l documentation
 */
 
-//XIOCTL
+//HELPERS
 //----------------------------------------------------------------------------------------------------
 
 static void	xioctl(int fh, int request, void* arg) {
@@ -46,11 +46,9 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 	dev->req		= calloc(1, sizeof(struct v4l2_requestbuffers));
 	dev->tv			= calloc(1, sizeof(struct timeval));
 
-	if (dev->fmt && dev->v4l_buffer && dev->req && dev->tv)
-		fprintf(stderr, "Device allocated successfully\n");
-	else {
+	if (!(dev->fmt && dev->v4l_buffer && dev->req && dev->tv)) {
 		fprintf(stderr, "Cannot allocate device\n");
-		return NULL;
+		exit(EXIT_FAILURE);
 	}
 
 	dev->fmt->type						= V4L2_BUF_TYPE_VIDEO_CAPTURE; //formats
@@ -63,12 +61,12 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 
 	if (dev->fmt->fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
 		printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
-		return NULL;
+		exit(EXIT_FAILURE);
 	}
 
 	if ((dev->fmt->fmt.pix.width != width) || (dev->fmt->fmt.pix.height != height))
 		printf("Warning: driver is sending image at %dx%d\n",
-		dev->fmt->fmt.pix.width, dev->fmt->fmt.pix.height);
+			dev->fmt->fmt.pix.width, dev->fmt->fmt.pix.height);
 
 
 	dev->req->count		= 2;
@@ -93,7 +91,7 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 
 		if (MAP_FAILED == dev->buffers[dev->n_buffers].start) {
 			perror("mmap");
-			return NULL;
+			exit(EXIT_FAILURE);
 		}
 	}
 

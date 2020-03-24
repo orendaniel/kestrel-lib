@@ -65,6 +65,7 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	else { 
 		for (int i = 0; i < cnt->index; i++) 
 			set_at(buffer, 0, cnt->points[i].x, cnt->points[i].y, 0);// delete contour
+		free_contour(cnt);
 		return NULL;
 	}
 
@@ -84,15 +85,17 @@ void stack_push(struct stack* stk, struct point p) {
 	if (stk->size != stk->max - 1) 
 		stk->items[++stk->size] = p;
 	else {
-		struct point* tmp = realloc(stk->items, (stk->max +100) * sizeof(struct point));
-		if (tmp != 0) {
-			stk->items = tmp;
+		stk->items = realloc(stk->items, (stk->max +100) * sizeof(struct point));
+		if (stk->items != 0) {
+			stk->items = stk->items;
 			stk->max += 100;
 			stk->items[++stk->size] = p;
 
 		}
-		else
-			fprintf(stderr, "stack overflow\n");
+		else {
+			fprintf(stderr, "Stack overflow\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 }
 
@@ -100,9 +103,8 @@ struct point stack_pop(struct stack* stk) {
 	if (stk->size > 0)
 		return stk->items[stk->size--];
 	else {
-		fprintf(stderr, "stack underflow\n");
-		struct point p = {0, 0};
-		return p;
+		fprintf(stderr, "Stack underflow\n");
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -126,7 +128,7 @@ Contour* new_contour() {
 	}
 	else { //allocation failed!
 		fprintf(stderr, "Cannot allocate contour\n");
-		return NULL;
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -149,6 +151,7 @@ void insert_point(Contour* cnt, size_t x, size_t y) {
 		}
 		else {
 			fprintf(stderr, "Cannot resize contour\n");
+			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -179,11 +182,15 @@ Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t s
 
 					Contour* cnt = square_trace(j, i, img, buffer); //traces the border
 					if (cnt) {
-						Contour** tmp_cnts = realloc(cnts, (amount +1) * sizeof(Contour*));
-						if (tmp_cnts != 0) {
-							cnts = tmp_cnts;//check if need free cnts before
+						Contour** tmp = realloc(cnts, (amount +1) * sizeof(Contour*));
+						if (tmp != 0) {
+							cnts = tmp;
 							cnts[amount] = cnt;
 							amount++;
+						}
+						else {
+							fprintf(stderr, "Not enough space to find contours\n");
+							exit(EXIT_FAILURE);
 						}
 					}
 				}
@@ -302,9 +309,10 @@ size_t get_contour_area(Contour* cnt) {
 		} 
 	}
 	
+	free_image(buffer);
+
 	free(stk->items);
 	free(stk);
-	free(buffer);
 	free(exp);
 	return area;
 }

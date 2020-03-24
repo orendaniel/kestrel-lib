@@ -34,9 +34,6 @@ static int put_number_in_table(lua_State* L, int i, float v) {
 }
 
 static int push_image(lua_State* L, Image* img) {
-	if (img == NULL)
-		return luaL_error(L, "image allocation error");
-
 	Image** pimg = (Image**)lua_newuserdata(L, sizeof(Image*));
 
 	*pimg = img;
@@ -104,7 +101,7 @@ static int lua_open_device(lua_State* L) {
 static int lua_find_contours(lua_State* L) {
 	Image** pimg 	= (Image**)luaL_checkudata(L, 1, IMAGE_MT);
 	size_t 	steps_x = luaL_optinteger(L, 2, DEFAULT_STEPS_TRACING);
-	size_t 	steps_y = luaL_optinteger(L, 2, DEFAULT_STEPS_TRACING);
+	size_t 	steps_y = luaL_optinteger(L, 3, DEFAULT_STEPS_TRACING);
 
 	size_t contours_amount;
 	Contour** cnts = find_contours(*pimg, &contours_amount, steps_x, steps_y);
