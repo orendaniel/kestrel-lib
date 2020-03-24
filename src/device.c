@@ -78,8 +78,8 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 	xioctl(dev->fd, VIDIOC_S_FMT, dev->fmt);
 
 	if (dev->fmt->fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
-		printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
-		exit(EXIT_FAILURE);
+		printf("Libv4l didn't accept RGB24 format\n");
+		return NULL;
 	}
 
 	if ((dev->fmt->fmt.pix.width != width) || (dev->fmt->fmt.pix.height != height))
