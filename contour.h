@@ -8,6 +8,12 @@ struct point {
 	size_t x, y;
 };
 
+struct stack{
+	size_t 			max;
+	size_t 			size;
+	struct point* 	items;
+};
+
 typedef struct {
 	struct point* 	points;
 	size_t 			size, index;

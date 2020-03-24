@@ -8,6 +8,7 @@
 //HELPERS
 //----------------------------------------------------------------------------------------------------
 
+
 Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	Contour* cnt = new_contour();
 
@@ -69,30 +70,40 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 
 }
 
-void sort_contour_by_y(Contour* cnt) {
-	int cmp (const void* a, const void* b) {
-		struct point* pa = (struct point*)a;
-		struct point* pb = (struct point*)b;
+struct stack* new_stack(size_t max) {
+	struct stack* stk = calloc(1, sizeof(struct stack*));
 
-		if (pa->y != pb->y) 
-			return pa->y - pb->y;
-		else 
-			return pa->x - pb->x;
-	}
-	qsort(cnt->points, cnt->index, sizeof(struct point), cmp);
+	stk->max 	= max;
+	stk->size 	= 0;
+	stk->items 	= calloc(max, sizeof(struct point));
+
+	return stk;
 }
 
-void sort_contour_by_x(Contour* cnt) {
-	int cmp (const void* a, const void* b) {
-		struct point* pa = (struct point*)a;
-		struct point* pb = (struct point*)b;
+void stack_push(struct stack* stk, struct point p) {
+	if (stk->size != stk->max - 1) 
+		stk->items[++stk->size] = p;
+	else {
+		struct point* tmp = realloc(stk->items, (stk->max +100) * sizeof(struct point));
+		if (tmp != 0) {
+			stk->items = tmp;
+			stk->max += 100;
+			stk->items[++stk->size] = p;
 
-		if (pa->x != pb->x) 
-			return pa->x - pb->x;
-		else 
-			return pa->y - pb->y;
+		}
+		else
+			fprintf(stderr, "stack overflow\n");
 	}
-	qsort(cnt->points, cnt->index, sizeof(struct point), cmp);
+}
+
+struct point stack_pop(struct stack* stk) {
+	if (stk->size > 0)
+		return stk->items[stk->size--];
+	else {
+		fprintf(stderr, "stack underflow\n");
+		struct point p = {0, 0};
+		return p;
+	}
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -249,10 +260,9 @@ struct point* get_contour_extreme(Contour* cnt) {
 }
 
 /*
-Calculate the OUTER AREA of contour NOT area inside the boundary
-
-this is done by plotting the contour on a buffer
-and subtracting the pixels that are outside the contour
+Calculate area by plotting contour and using flood fill 
+to count area outside the contour and subtracting it
+from the area of the buffer
 */
 size_t get_contour_area(Contour* cnt) {
 	struct point* exp = get_contour_extreme(cnt);
@@ -260,63 +270,43 @@ size_t get_contour_area(Contour* cnt) {
 	size_t cnt_w = exp[1].x - exp[3].x +1;
 	size_t cnt_h = exp[2].y - exp[0].y +1;
 
+	Image* buffer = new_image(1, cnt_w +2, cnt_h +2);
 
-	Image* buffer = new_image(1, cnt_w, cnt_h);
+	size_t area = (cnt_w +2) * (cnt_h +2);
 
 	for (int i = 0; i < cnt->index; i++)
-		set_at(buffer, 0, cnt->points[i].x -exp[3].x, cnt->points[i].y -exp[0].y, 1);
+		set_at(buffer, 0, cnt->points[i].x -exp[3].x +1, cnt->points[i].y -exp[0].y +1, 1);
 
-	size_t count = 0;
-	for (int i = 0; i < cnt_h; i++) {
-		for (int j = 0; j < cnt_w; j++) {
-			if (get_at(buffer, 0, j, i, 0) == 1)
-				break;
-			else if (get_at(buffer, 0, j, i, 0) == 0) {
-				set_at(buffer, 0, j, i, 2); 
-				count++;
-			}
-		}
+	struct stack* 	stk = new_stack(area);
+	struct point 	p 	= {0, 0};
+	stack_push(stk, p);
 
-		for (int j = cnt_w -1; j >= 0; j--) {
-			if (get_at(buffer, 0, j, i, 0) == 1)
-				break;
-			else if (get_at(buffer, 0, j, i, 0) == 0) {
-				set_at(buffer, 0, j, i, 2); 
-				count++;
-			}
-		}
+	while (stk->size > 0) {
+		struct point p = stack_pop(stk);
+		
+		size_t x = p.x;
+		size_t y = p.y;
+
+		if (get_at(buffer, 0, x, y, 1) == 0) {
+			set_at(buffer, 0, x, y, 2);
+			area--;
+			struct point p1 = {x +1, y};
+			struct point p2 = {x -1, y};
+			struct point p3 = {x, y +1};
+			struct point p4 = {x, y -1};
+			stack_push(stk, p1);
+			stack_push(stk, p2);
+			stack_push(stk, p3);
+			stack_push(stk, p4);
+		
+		} 
 	}
-
-	for (int j = 0; j < cnt_w; j++) {
-		for (int i = 0; i < cnt_h; i++) {
-			if (get_at(buffer, 0, j, i, 0) == 1)
-				break;
-			else if (get_at(buffer, 0, j, i, 0) == 0) {
-				set_at(buffer, 0, j, i, 2); 
-				count++;
-			}
-		}
-
-		for (int i = cnt_h -1; i >= 0; i--) {
-			if (get_at(buffer, 0, j, i, 0) == 1)
-				break;
-			else if (get_at(buffer, 0, j, i, 0) == 0) {
-				set_at(buffer, 0, j, i, 2); 
-				count++;
-			}
-		}
-	}
-
-	int area = cnt_h*cnt_w - count;
-
+	
+	free(stk->items);
+	free(stk);
 	free(buffer);
 	free(exp);
-	if (area > 0)
-		return area;
-	else {
-		fprintf(stderr, "error calculating area\n");
-		return 0;
-	}
+	return area;
 }
 
 void fit_line(Contour* cnt, float* m, float* b) {
