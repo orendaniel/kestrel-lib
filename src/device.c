@@ -33,10 +33,8 @@ static void	xioctl(int fh, int request, void* arg) {
 		r = v4l2_ioctl(fh, request, arg);
 	} while (r == -1 && ((errno == EINTR) || (errno == EAGAIN)));
 
-	if (r == -1) {
+	if (r == -1) 
 		fprintf(stderr, "error %d, %s\n", errno, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
 }
 
 void free_buffer(Buffer* bff) {
