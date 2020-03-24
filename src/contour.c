@@ -26,7 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //HELPERS
 //----------------------------------------------------------------------------------------------------
 
-
+/*
+traces a contour using the square tracing method
+*/
 Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	Contour* cnt = new_contour();
 
@@ -42,7 +44,7 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	
 	/*
 	counter should not exceed 8
-	because a square has 8 neighbours we don't want to incircle the square in an infinite loop
+	because every square has 8 neighbours we don't want to incircle the square in an infinite loop
 	*/
 	int safty_counter = 0;
 
@@ -89,6 +91,11 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 
 }
 
+/*
+the stack is used to impelement a flood fill algorithm
+the stack is needed in order to calculate the area
+of a contour
+*/
 struct stack* new_stack(size_t max) {
 	struct stack* stk = calloc(1, sizeof(struct stack*));
 
@@ -181,9 +188,10 @@ void free_contour(Contour* cnt) {
 
 
 /*
-find the contours in a binary image using square trace with 8 connectivity
+find the contours in a binary image using square trace with 4 connectivity
 set steps to 1 for full precision at the price of speed.
-recommended 3 steps for regular images
+
+recommended 3 steps 
 */
 Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t steps_y) {
 	if (img->channels == 1) {
@@ -244,8 +252,8 @@ void contour_center(Contour* cnt, float* x, float* y) {
 }
 
 /*
-return the extrem points of a contour
-order N E S W
+return the extreme points of a contour
+order: N E S W
 */
 struct point* get_contour_extreme(Contour* cnt) {
 	struct point* result = calloc(4, sizeof(struct point));
@@ -285,7 +293,7 @@ struct point* get_contour_extreme(Contour* cnt) {
 }
 
 /*
-Calculate area by plotting contour and using flood fill 
+calculate area by plotting the contour and using flood fill 
 to count area outside the contour and subtracting it
 from the area of the buffer
 */
@@ -335,6 +343,11 @@ size_t get_contour_area(Contour* cnt) {
 	return area;
 }
 
+/*
+set the pointers m and b to be the best fit of function
+y = m*x + b
+for the given contour
+*/
 void fit_line(Contour* cnt, float* m, float* b) {
 	float sum_x 	= 0;
 	float sum_y 	= 0; 

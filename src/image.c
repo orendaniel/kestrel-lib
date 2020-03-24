@@ -88,8 +88,11 @@ void free_image(Image* img) {
 }
 
 /*
+get and set return or set the value at (channel, x, y) for Image img.
+
 get and set don't return error if given invalid index
 that is because some algorithms can go out of range
+
 get_at will just return a default value if out of range
 */
 value_t get_at(Image* img, size_t chnl, size_t x, size_t y, value_t def_value) {
@@ -158,6 +161,9 @@ Image* in_range(Image* img, value_t* lower, value_t* upper, value_t on, value_t 
 	return result;
 }
 
+/*
+RGB to HSV conversion
+*/
 Image* rgb_to_hsv(Image* img) {
 	if (img->channels == 3) {
 		Image* result = new_image(3, img->width, img->height);
@@ -195,6 +201,9 @@ Image* rgb_to_hsv(Image* img) {
 	}
 }
 
+/*
+RGB to grayscale conversion
+*/
 Image* grayscale(Image* img) {
 	Image* result 		= new_image(1, img->width, img->height);
 	size_t chnls_amount = img->channels;
@@ -212,6 +221,9 @@ Image* grayscale(Image* img) {
 	return result;
 }
 
+/*
+returns the inverted image
+*/
 Image* invert_image(Image* img) {
 	Image* result = new_image(img->channels, img->width, img->height);
 
@@ -230,6 +242,9 @@ Image* invert_image(Image* img) {
 //I/O FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
+/*
+functions to read and write .ppm files
+*/
 void write_pixel_map(const char* file, Image* img) {
 	FILE* f = fopen(file, "w");
 
