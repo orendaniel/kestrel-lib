@@ -61,6 +61,23 @@ Image* arth_operation(Image* img, int (*fn)(value_t value, float x), float x) {
 	return result;
 }
 
+double sobel_helper(Image* img, size_t x, size_t y) {
+	int Gx[3][3] = {{-1, 0, 1},
+					{-2, 0, 2},
+					{-1, 0, 1}} ;
+
+	int Gy[3][3] = {{-1, -2, -1},
+					{0, 0, 0},
+					{1, 2, 1}};
+	double mag_x = 0, mag_y = 0;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			mag_x += Gx[i][j] * get_at(img, 0, x - j, y - i, 0);
+			mag_y += Gy[i][j] * get_at(img, 0, x - j, y - i, 0);
+		}
+	}
+	return pow(mag_x * mag_x + mag_y * mag_y, 0.5);
+}
 //----------------------------------------------------------------------------------------------------
 
 //COMMON FUNCTIONS
@@ -202,7 +219,8 @@ Image* rgb_to_hsv(Image* img) {
 }
 
 /*
-RGB to grayscale conversion
+any image type to grayscale conversion
+average of all channels
 */
 Image* grayscale(Image* img) {
 	Image* result 		= new_image(1, img->width, img->height);
@@ -219,6 +237,35 @@ Image* grayscale(Image* img) {
 	}
 	
 	return result;
+}
+
+/*
+grayscale to sobel
+*/
+Image* sobel(Image* img) {
+
+	if (img->channels == 1) {
+
+		Image* result = new_image(1, img->width, img->height);
+		for (int i = 2; i < img->height -2; i++) {
+			for (int j = 2; j < img->width -2; j++) {
+				int 	sv 	= (int)sobel_helper(img, j, i);
+				value_t v 	= 0;
+				if (sv > MAX_VALUE)
+					v = MAX_VALUE;
+				else
+					v = sv;
+
+				set_at(result, 0, j, i, v);
+			}
+		}
+
+		return result;
+	}
+	else {
+		fprintf(stderr, "Sobel operator for grayscale images only\n");
+		return NULL;
+	}
 }
 
 /*

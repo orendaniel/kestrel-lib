@@ -39,6 +39,7 @@ Image* 		split_channel(Image* img, size_t c);
 Image* 		in_range(Image* img, value_t* lower, value_t* upper, value_t on, value_t off);
 Image* 		rgb_to_hsv(Image* img);
 Image* 		grayscale(Image* img);
+Image* 		sobel(Image* img);
 Image* 		invert_image(Image* img);
 
 //----------------------------------------------------------------------------------------------------

@@ -95,6 +95,16 @@ static int lua_grayscale(lua_State* L) {
 
 }
 
+static int lua_sobel(lua_State* L) {
+	Image** pimg 	= luaL_checkudata(L, 1, IMAGE_MT);
+	Image* 	sbl 	= sobel(*pimg);
+
+	push_image(L, sbl);
+	
+	return 1;
+
+}
+
 static int lua_open_device(lua_State* L) {
 	const char* path 	= luaL_checkstring(L, 1);
 	size_t 		width 	= luaL_optinteger(L, 2, DEFAULT_DEVICE_WIDTH);
@@ -492,6 +502,7 @@ int LUA_API luaopen_kestrel(lua_State* L) {
 		{"newimage",			lua_new_image},
 		{"rgb_to_hsv", 			lua_rgb_to_hsv},
 		{"grayscale", 			lua_grayscale},
+		{"sobel", 				lua_sobel},
 		{"opendevice",			lua_open_device},
 		{"findcontours",		lua_find_contours},
 		{"write_pixelmap", 		lua_write_pixel_map},
