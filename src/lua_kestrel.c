@@ -38,15 +38,15 @@ static int get_index_integer(lua_State* L, int tindex, int i) {
 	lua_gettable(L, tindex);
 }
 
-static int put_integer_in_table(lua_State* L, int i, int v) {
-	lua_pushinteger(L, i);
+static int put_integer_in_table(lua_State* L, const char* i, int v) {
+	lua_pushstring(L, i);
 	lua_pushinteger(L, v);
 	lua_settable(L, -3);
 
 }
 
-static int put_number_in_table(lua_State* L, int i, float v) {
-	lua_pushinteger(L, i);
+static int put_number_in_table(lua_State* L, const char* i, float v) {
+	lua_pushstring(L, i);
 	lua_pushnumber(L, v);
 	lua_settable(L, -3);
 }
@@ -411,8 +411,8 @@ static int lua_contour_center(lua_State* L) {
 
 	lua_createtable(L, 2, 0);
 
-	put_number_in_table(L, 1, x +0.5); //adding 0.5 because lua is offseted by 1
-	put_number_in_table(L, 2, y +0.5);
+	put_number_in_table(L, "x", x +0.5); //adding 0.5 because lua is offseted by 1
+	put_number_in_table(L, "y", y +0.5);
 
 	return 1;
 }
@@ -425,9 +425,9 @@ static int lua_contour_to_table(lua_State* L) {
 		lua_pushinteger(L, i+1);//index
 
 		lua_createtable(L, 2, 0);
-		put_integer_in_table(L, 1, (*pcnt)->points[i].x +1);
+		put_integer_in_table(L, "x", (*pcnt)->points[i].x +1);
 
-		put_integer_in_table(L, 2, (*pcnt)->points[i].y +1);
+		put_integer_in_table(L, "y", (*pcnt)->points[i].y +1);
 		
 		lua_settable(L, -3);
 	}
@@ -446,9 +446,9 @@ static int lua_contour_extreme_points(lua_State* L) {
 
 		lua_createtable(L, 2, 0);
 		
-		put_integer_in_table(L, 1, p[i].x +1);
+		put_integer_in_table(L, "x", p[i].x +1);
 
-		put_integer_in_table(L, 2, p[i].y +1);
+		put_integer_in_table(L, "y", p[i].y +1);
 
 		lua_settable(L, -3);
 	}

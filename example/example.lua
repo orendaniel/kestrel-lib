@@ -30,7 +30,7 @@ for n=1,100 do
 		-- calculate the center and area of each contour
 		center = cnt:center()
 		area = cnt:area()
-		print("#" .. tostring(i), cnt:area(), center[1], center[2])
+		print("#" .. tostring(i), cnt:area(), center.x, center.y)
 	end
 
 	print("process time: ", os.clock() - st)
