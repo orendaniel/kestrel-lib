@@ -26,6 +26,4 @@ lua 5.3
 
 -document the source code / check memory leaks / debugging
 
--rewrite read_pixel_map function
-
 -better Makefile
