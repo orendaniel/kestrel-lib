@@ -295,6 +295,11 @@ functions to read and write .ppm files
 void write_pixel_map(const char* file, Image* img) {
 	FILE* f = fopen(file, "w");
 
+	if (f == NULL) {
+		fprintf(stderr, "Cannot open file\n");
+		fclose(f);
+	}
+
 
 	if (img->channels == 3) { //RGB image
 		fprintf(f, "P3\n%d %d %d\n", img->width, img->height, MAX_VALUE);
@@ -323,27 +328,32 @@ void write_pixel_map(const char* file, Image* img) {
 }
 
 /*
-NEEDS A REWRITE
+doesn't accept comments
 */
 Image* read_pixel_map(const char* file) {
 	FILE* f = fopen(file, "r");
 	size_t width, height, max_value;
+
+	if (f == NULL) {
+		fprintf(stderr, "Cannot open file\n");
+		fclose(f);
+	}
 
 	Image* result = NULL;
 
 	char str[2];
 
 	fscanf(f, "%s\n", str);
-	fscanf(f, "%d %d %d\n", &width, &height, &max_value);
+	fscanf(f, "%d %d %d", &width, &height, &max_value);
 
 	if (strcmp(str, "P2") == 0) {
 		result = new_image(1, width, height);
 
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
-				value_t gray;
-				fscanf(f, "%d\n", &gray);
-				set_at(result, 0, j, i, gray);
+				value_t v;
+				if (fscanf(f, "%d", &v))
+					set_at(result, 0, j, i, v);
 			}
 		}
 	}
@@ -352,11 +362,11 @@ Image* read_pixel_map(const char* file) {
 
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
-				value_t r, g, b;
-				fscanf(f, "%d %d %d\n", &r, &g, &b);
-				set_at(result, 0, j, i, r);
-				set_at(result, 1, j, i, g);
-				set_at(result, 2, j, i, b);
+				for (int c = 0; c < 3; c++) {
+					value_t v;
+					if (fscanf(f, "%d", &v))
+						set_at(result, c, j, i, v);
+				}
 			}
 		}
 	}
