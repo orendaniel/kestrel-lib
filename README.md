@@ -28,8 +28,4 @@ lua 5.3
 
 -rewrite read_pixel_map function
 
--add convex hull function
-
--add a function to compute if contour is inside other contour
-
 -better Makefile
