@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "device.h"
 
 /*
-Communication with v4l
+Interfacing with v4l
 please refer to v4l and libv4l documentation
 */
 
