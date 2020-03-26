@@ -162,11 +162,14 @@ static int lua_write_pixel_map(lua_State* L) {
 
 static int lua_read_pixel_map(lua_State* L) {
 	const char* name = luaL_checkstring(L, 1);
-	
-	Image* img = read_pixel_map(name);
-	push_image(L, img);
 
-	return 1;	
+	Image* img = read_pixel_map(name);
+	if (img != NULL) {
+		push_image(L, img);
+		return 1;
+	}
+	else
+		return 0;
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -297,7 +297,7 @@ void write_pixel_map(const char* file, Image* img) {
 
 	if (f == NULL) {
 		fprintf(stderr, "Cannot open file\n");
-		fclose(f);
+		return;
 	}
 
 
@@ -336,7 +336,7 @@ Image* read_pixel_map(const char* file) {
 
 	if (f == NULL) {
 		fprintf(stderr, "Cannot open file\n");
-		fclose(f);
+		return NULL;
 	}
 
 	Image* result = NULL;
