@@ -33,6 +33,7 @@ for n=1,100 do
 		print("#" .. tostring(i), cnt:area(), center.x, center.y)
 	end
 
+	collectgarbage("collect")
 	print("process time: ", os.clock() - st)
 	print("---------------")
 end
