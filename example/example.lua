@@ -1,6 +1,6 @@
 --[[ 
 A basic example
-]]--
+]]
 
 -- import kestrel with
 kestrel = require "kestrel"
