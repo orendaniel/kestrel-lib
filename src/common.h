@@ -27,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <limits.h>
 #include <math.h>
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(MIN_A,MIN_B) (((MIN_A)<(MIN_B))?(MIN_A):(MIN_B))
+#define MAX(MAX_A,MAX_B) (((MAX_A)>(MAX_B))?(MAX_A):(MAX_B))
 
 #define CONTOUR_ALLOCATION_SIZE 100
 
