@@ -35,7 +35,6 @@ for n=1,100 do
 	end
 
 	print("process time: ", os.clock() - st)
-	collectgarbage("collect")
 	print("---------------")
 end
 
