@@ -24,6 +24,8 @@ for n=1,100 do
 	-- get image contours
 	local contours = kestrel.findcontours(bin)
 
+	print("process time: ", os.clock() - st)
+
 	print("found " .. tostring(#contours) .. " contours")
 
 	for i, cnt in pairs(contours) do
@@ -34,7 +36,6 @@ for n=1,100 do
 	end
 
 	collectgarbage("collect")
-	print("process time: ", os.clock() - st)
 	print("---------------")
 end
 
