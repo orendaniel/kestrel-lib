@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	get_at(IMAGE, 0, X-1, Y, 0) && \
 	get_at(IMAGE, 0, X, Y-1, 0))
 
-//HELPERS
+// HELPERS
 //----------------------------------------------------------------------------------------------------
 
 /*
@@ -36,55 +36,57 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 
 	set_at(buffer, 0, st_x, st_y, 1);
 
-	size_t next_step_x = 0;//go left
+	size_t next_step_x = 0; // go left
 	size_t next_step_y = -1;
 
 	size_t nx_x = st_x + next_step_x;
 	size_t nx_y = st_y + next_step_y;
 	
 	/*
-	counter should not exceed 8
-	because every square has 8 neighbours we don't want to incircle the square in an infinite loop
+	counter should not exceed 8 because every square has 8 neighbours
+	this counter insure that the algorithm won't incircle the same
+	a single pixel for infinity
 	*/
-	int safty_counter = 0;
+	int single_square_counter = 0;
 
 
-	while (!(nx_x == st_x && nx_y == st_y) && safty_counter < 8) {
+	while (!(nx_x == st_x && nx_y == st_y) && single_square_counter < 8) {
 		if (get_at(img, 0, nx_x, nx_y, 0) == 0) {
 
-			//these lines enable 4 connectivity
+			// these lines enable 4 connectivity
 			nx_x -= next_step_x;
 			nx_y -= next_step_y;
 
 			size_t tmp 	= next_step_x;
-			next_step_x = -next_step_y;//go right
+			next_step_x = -next_step_y;// go right
 			next_step_y = tmp;
 			
 			nx_x += next_step_x;
 			nx_y += next_step_y;
-			safty_counter++;
+
+			single_square_counter++;
 		}
 		else {
 			insert_point(cnt, nx_x, nx_y);
 			set_at (buffer, 0, nx_x, nx_y, 1);
 
 			size_t tmp 	= next_step_x;
-			next_step_x = next_step_y;//go left
+			next_step_x = next_step_y; // go left
 			next_step_y = -tmp;
 
 			nx_x += next_step_x;
 			nx_y += next_step_y;
 			
-			safty_counter = 0;	
+			single_square_counter = 0;	
 		}
 			
 	}
-	//clean noises and unwanted sparkles
+	// clean noises and unwanted sparkles
 	if (cnt->index >= 8)
 		return cnt;
 	else { 
 		for (int i = 0; i < cnt->index; i++) 
-			set_at(buffer, 0, cnt->points[i].x, cnt->points[i].y, 0);// delete contour
+			set_at(buffer, 0, cnt->points[i].x, cnt->points[i].y, 0); // delete contour
 		free_contour(cnt);
 		return NULL;
 	}
@@ -135,7 +137,7 @@ struct point stack_pop(struct stack* stk) {
 
 //----------------------------------------------------------------------------------------------------
 
-//COMMON FUNCTIONS
+// COMMON FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
 Contour* new_contour() {
@@ -151,7 +153,7 @@ Contour* new_contour() {
 		cnt->index 	= 0;
 		return cnt;
 	}
-	else { //allocation failed!
+	else { // allocation failed!
 		fprintf(stderr, "Cannot allocate contour\n");
 		exit(EXIT_FAILURE);
 	}
@@ -194,9 +196,16 @@ set steps to 1 for full precision at the price of speed.
 recommended 3 steps 
 */
 Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t steps_y) {
+
+	if (steps_x < 1 || steps_y < 1) {
+		fprintf(stderr, "Tracing steps must be equal or greater than 1");
+		*index_size = 0;
+		return NULL;
+	}
+
 	if (img->channels == 1) {
 
-		Image* 		buffer 	= new_image(1, img->width, img->height); //keep track of points on other contours
+		Image* 		buffer 	= new_image(1, img->width, img->height); // keep track of points on other contours
 		Contour** 	cnts 	= malloc(sizeof(Contour**));
 		size_t 		amount 	= 0;
 
@@ -204,9 +213,9 @@ Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t s
 			for (int j = 0; j < img->width; j += steps_x) {
 				if (get_at(img, 0, j, i, 0) != 0 &&
 						get_at (buffer, 0, j, i, 0) == 0 &&
-						IS_BORDER(img, j, i)) { //only borders remain
+						IS_BORDER(img, j, i)) { // only borders remain
 
-					Contour* cnt = square_trace(j, i, img, buffer); //traces the border
+					Contour* cnt = square_trace(j, i, img, buffer); // traces the border
 					if (cnt) {
 						Contour** tmp = realloc(cnts, (amount +1) * sizeof(Contour*));
 						if (tmp != 0) {
@@ -237,7 +246,7 @@ Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t s
 
 //----------------------------------------------------------------------------------------------------
 
-//CONTOUR CALCULATION
+// CONTOUR CALCULATION
 //----------------------------------------------------------------------------------------------------
 
 void contour_center(Contour* cnt, float* x, float* y) {
@@ -263,26 +272,26 @@ struct point* get_contour_extreme(Contour* cnt) {
 		result[i].y = cnt->points[1].y;
 	}
 	
-	//remeber that y up --> down
+	// remeber that y up --> down
 	for (int i = 0; i < cnt->index; i++) {
-		if (result[0].y > cnt->points[i].y) {//found N
+		if (result[0].y > cnt->points[i].y) { // found N
 			result[0].x = cnt->points[i].x;
 			result[0].y = cnt->points[i].y;
 		}
 
-		if (result[1].x < cnt->points[i].x) {//found E
+		if (result[1].x < cnt->points[i].x) { // found E
 			result[1].x = cnt->points[i].x;
 			result[1].y = cnt->points[i].y;
 			
 		}
 
-		if (result[2].y < cnt->points[i].y) {//found S
+		if (result[2].y < cnt->points[i].y) { // found S
 			result[2].x = cnt->points[i].x;
 			result[2].y = cnt->points[i].y;
 		
 		}
 
-		if (result[3].x > cnt->points[i].x) {//found W
+		if (result[3].x > cnt->points[i].x) { // found W
 			result[3].x = cnt->points[i].x;
 			result[3].y = cnt->points[i].y;
 		

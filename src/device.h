@@ -48,7 +48,7 @@ typedef struct {
 } Device;
 
 
-//DEVICE FUNCTIONS
+// DEVICE FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
 Device*		new_device(const char* name, size_t width, size_t height);

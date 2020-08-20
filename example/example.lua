@@ -10,11 +10,11 @@ kestrel = require "kestrel"
 cam = kestrel.opendevice("/dev/video0", 160, 120)
 
 for n=1,100 do
-	local st = os.clock()
 	
 	-- read frame from camera
 	local img = cam:readframe()
 
+	local st = os.clock()
 	-- convert frame to hsv
 	local hsv = kestrel.rgb_to_hsv(img)
 

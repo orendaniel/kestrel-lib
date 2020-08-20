@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "image.h"
 
-//HELPERS
+// HELPERS
 //----------------------------------------------------------------------------------------------------
 Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_t b)) {
 	if (img1->channels == 1 && img2->channels == 1) {
@@ -80,7 +80,7 @@ double sobel_helper(Image* img, size_t x, size_t y) {
 }
 //----------------------------------------------------------------------------------------------------
 
-//COMMON FUNCTIONS
+// COMMON FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
 Image* new_image(size_t channels, size_t width, size_t height) {
@@ -286,7 +286,7 @@ Image* invert_image(Image* img) {
 
 //----------------------------------------------------------------------------------------------------
 
-//I/O FUNCTIONS
+// I/O FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
 /*
@@ -301,19 +301,19 @@ void write_pixel_map(const char* file, Image* img) {
 	}
 
 
-	if (img->channels == 3) { //RGB image
+	if (img->channels == 3) { // RGB image
 		fprintf(f, "P3\n%d %d %d\n", img->width, img->height, MAX_VALUE);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
 				fprintf(f, "%d %d %d\n", 
-					get_at(img, 0, j, i, 0), //red channel
-					get_at(img, 1, j, i, 0), //green channel
-					get_at(img, 2, j, i, 0)); //blue channel
+					get_at(img, 0, j, i, 0), // red channel
+					get_at(img, 1, j, i, 0), // green channel
+					get_at(img, 2, j, i, 0)); // blue channel
 			}
 		}
 	}
 
-	else if (img->channels == 1) { //grayscale image
+	else if (img->channels == 1) { // grayscale image
 		fprintf(f, "P2\n%d %d %d\n", img->width, img->height, MAX_VALUE);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
@@ -379,7 +379,7 @@ Image* read_pixel_map(const char* file) {
 
 //----------------------------------------------------------------------------------------------------
 
-//IMAGE OPERATORS
+// IMAGE OPERATORS
 //----------------------------------------------------------------------------------------------------
 
 char image_equality(Image* img1, Image* img2) {

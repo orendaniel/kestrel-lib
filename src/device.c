@@ -23,7 +23,7 @@ Interfacing with v4l
 please refer to v4l and libv4l documentation
 */
 
-//HELPERS
+// HELPERS
 //----------------------------------------------------------------------------------------------------
 
 static void	xioctl(int fh, int request, void* arg) {
@@ -45,7 +45,7 @@ void free_buffer(Buffer* bff) {
 //----------------------------------------------------------------------------------------------------
 
 
-//DEVICE FUNCTIONS
+// DEVICE FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
 Device*	new_device(const char* name, size_t width, size_t height) {
@@ -57,7 +57,7 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 		return NULL;
 	}
 
-	dev->fmt		= calloc(1, sizeof(struct v4l2_format));//allocate memory
+	dev->fmt		= calloc(1, sizeof(struct v4l2_format)); // allocate memory
 	dev->v4l_buffer	= calloc(1, sizeof(struct v4l2_buffer));
 	dev->req		= calloc(1, sizeof(struct v4l2_requestbuffers));
 	dev->tv			= calloc(1, sizeof(struct timeval));
@@ -67,7 +67,7 @@ Device*	new_device(const char* name, size_t width, size_t height) {
 		exit(EXIT_FAILURE);
 	}
 
-	dev->fmt->type						= V4L2_BUF_TYPE_VIDEO_CAPTURE; //formats
+	dev->fmt->type						= V4L2_BUF_TYPE_VIDEO_CAPTURE; // formats
 	dev->fmt->fmt.pix.width 			= width;
 	dev->fmt->fmt.pix.height			= height;
 	dev->fmt->fmt.pix.pixelformat		= V4L2_PIX_FMT_RGB24;

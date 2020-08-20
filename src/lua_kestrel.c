@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "device.h"
 #include "contour.h"
 
-//HELPERS
+// HELPERS
 //----------------------------------------------------------------------------------------------------
 
 static int get_index_integer(lua_State* L, int tindex, int i) {
@@ -62,7 +62,7 @@ static int push_image(lua_State* L, Image* img) {
 
 //----------------------------------------------------------------------------------------------------
 
-//KESTREL
+// KESTREL
 //----------------------------------------------------------------------------------------------------
 
 static int lua_new_image(lua_State* L) {
@@ -135,7 +135,7 @@ static int lua_find_contours(lua_State* L) {
 	lua_createtable(L, contours_amount, 0);
 	for (int i = 0; i < contours_amount; i++){
 		
-		lua_pushinteger(L, i+1);//index of contour
+		lua_pushinteger(L, i +1); // index of contour
 
 		Contour** pcnt = (Contour**)lua_newuserdata(L, sizeof(Contour*));
 		
@@ -175,7 +175,7 @@ static int lua_read_pixel_map(lua_State* L) {
 //----------------------------------------------------------------------------------------------------
 
 
-//IMAGE
+// IMAGE
 //----------------------------------------------------------------------------------------------------
 
 static int lua_get_at(lua_State* L) {
@@ -223,7 +223,7 @@ static int lua_in_range(lua_State* L) {
 			return luaL_error(L, "memory error");
 
 		for (int i = 1; i <= n_lower; i++) {
-			//tables are at 2 and 3 pushing index to get value
+			// tables are at 2 and 3 pushing index to get value
 			get_index_integer(L, 2, i);
 			lowers[i-1] = lua_tointeger(L, -1);
 
@@ -373,7 +373,7 @@ static int lua_gc_image(lua_State* L) {
 
 //----------------------------------------------------------------------------------------------------
 
-//DEVICE
+// DEVICE
 //----------------------------------------------------------------------------------------------------
 
 static int lua_read_frame(lua_State* L) {
@@ -404,7 +404,7 @@ static int lua_close_device(lua_State* L) {
 
 //----------------------------------------------------------------------------------------------------
 
-//CONTOUR
+// CONTOUR
 //----------------------------------------------------------------------------------------------------
 
 static int lua_contour_center(lua_State* L) {
@@ -414,7 +414,7 @@ static int lua_contour_center(lua_State* L) {
 
 	lua_createtable(L, 2, 0);
 
-	put_number_in_table(L, "x", x +0.5); //adding 0.5 because lua is offseted by 1
+	put_number_in_table(L, "x", x +0.5); // adding 0.5 because lua is offseted by 1
 	put_number_in_table(L, "y", y +0.5);
 
 	return 1;
@@ -425,7 +425,7 @@ static int lua_contour_to_table(lua_State* L) {
 
 	lua_createtable(L, (*pcnt)->index, 1);
 	for (int i = 0; i < (*pcnt)->index; i++) {
-		lua_pushinteger(L, i+1);//index
+		lua_pushinteger(L, i+1); // index
 
 		lua_createtable(L, 2, 0);
 		put_integer_in_table(L, "x", (*pcnt)->points[i].x +1);
@@ -445,7 +445,7 @@ static int lua_contour_extreme_points(lua_State* L) {
 
 	lua_createtable(L, 4, 1);
 	for (int i = 0; i < 4; i++) {
-		lua_pushinteger(L, i +1);//index
+		lua_pushinteger(L, i +1); // index
 
 		lua_createtable(L, 2, 0);
 		
@@ -482,7 +482,7 @@ static int lua_contour_fit_line(lua_State* L) {
 	float b;
 	fit_line(*pcnt, &m, &b);
 	lua_pushnumber(L, m);
-	lua_pushnumber(L, b +0.5);//add lua offset
+	lua_pushnumber(L, b +0.5); // add lua offset
 
 	return 2;
 
@@ -497,7 +497,7 @@ static int lua_gc_contour(lua_State* L) {
 
 //----------------------------------------------------------------------------------------------------
 
-//LUA
+// LUA
 //----------------------------------------------------------------------------------------------------
 
 int LUA_API luaopen_kestrel(lua_State* L) {

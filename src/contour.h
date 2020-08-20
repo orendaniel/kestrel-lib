@@ -38,7 +38,7 @@ typedef struct {
 } Contour;
 
 
-//COMMON FUNCTIONS
+// COMMON FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
 Contour* 	new_contour();
@@ -49,7 +49,7 @@ Contour** 	find_contours(Image* img, size_t* index_size, size_t steps_x, size_t 
 //----------------------------------------------------------------------------------------------------
 
 
-//CONTOUR CALCULATION
+// CONTOUR CALCULATION
 //----------------------------------------------------------------------------------------------------
 
 void 			contour_center(Contour* cnt, float* x, float* y);
