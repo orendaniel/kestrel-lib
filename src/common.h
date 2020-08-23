@@ -27,8 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <limits.h>
 #include <math.h>
 
-#define MIN(MIN_A,MIN_B) (((MIN_A)<(MIN_B))?(MIN_A):(MIN_B))
-#define MAX(MAX_A,MAX_B) (((MAX_A)>(MAX_B))?(MAX_A):(MAX_B))
+#define MAX_VALUE UCHAR_MAX
+typedef unsigned char value_t;
+
+// LIBRARY SETTINGS HANDLE WITH CARE
+
 
 #define CONTOUR_ALLOCATION_SIZE 100
 
@@ -37,8 +40,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define DEFAULT_STEPS_TRACING 	3
 
-#define MAX_VALUE UCHAR_MAX
-
-typedef unsigned char value_t;
-
+#define NOISE_COUNT 			8 // correspond to incircling single pixel's 8 neibooghers
 #endif

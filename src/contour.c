@@ -42,15 +42,11 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	size_t nx_x = st_x + next_step_x;
 	size_t nx_y = st_y + next_step_y;
 	
-	/*
-	counter should not exceed 8 because every square has 8 neighbours
-	this counter insure that the algorithm won't incircle the same
-	a single pixel for infinity
-	*/
-	int single_square_counter = 0;
+	// noise cleaner counter
+	int cleaner_counter = 0;
 
 
-	while (!(nx_x == st_x && nx_y == st_y) && single_square_counter < 8) {
+	while (!(nx_x == st_x && nx_y == st_y) && cleaner_counter < NOISE_COUNT) {
 		if (get_at(img, 0, nx_x, nx_y, 0) == 0) {
 
 			// these lines enable 4 connectivity
@@ -64,7 +60,7 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 			nx_x += next_step_x;
 			nx_y += next_step_y;
 
-			single_square_counter++;
+			cleaner_counter++;
 		}
 		else {
 			insert_point(cnt, nx_x, nx_y);
@@ -77,16 +73,16 @@ Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 			nx_x += next_step_x;
 			nx_y += next_step_y;
 			
-			single_square_counter = 0;	
+			cleaner_counter = 0;	
 		}
 			
 	}
-	// clean noises and unwanted sparkles
-	if (cnt->index >= 8)
+	// if not noise
+	if (cnt->index >= NOISE_COUNT)
 		return cnt;
-	else { 
+	else { // else clean the noise
 		for (int i = 0; i < cnt->index; i++) 
-			set_at(buffer, 0, cnt->points[i].x, cnt->points[i].y, 0); // delete contour
+			set_at(buffer, 0, cnt->points[i].x, cnt->points[i].y, 0); // erase contour
 		free_contour(cnt);
 		return NULL;
 	}
@@ -372,7 +368,6 @@ void fit_line(Contour* cnt, float* m, float* b) {
 
 	*m = (cnt->index * sum_xy - sum_x * sum_y) / (cnt->index * sum_x2 - (sum_x * sum_x)); 
 	*b = (sum_y - (*m) * sum_x) / cnt->index; 
-
 	
 }
 

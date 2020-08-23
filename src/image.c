@@ -18,6 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "image.h"
 
+#define MIN(MIN_A,MIN_B) (((MIN_A)<(MIN_B))?(MIN_A):(MIN_B))
+#define MAX(MAX_A,MAX_B) (((MAX_A)>(MAX_B))?(MAX_A):(MAX_B))
+
 // HELPERS
 //----------------------------------------------------------------------------------------------------
 Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_t b)) {
