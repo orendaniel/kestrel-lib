@@ -37,11 +37,6 @@ static void	xioctl(int fh, int request, void* arg) {
 		fprintf(stderr, "error %d, %s\n", errno, strerror(errno));
 }
 
-void free_buffer(Buffer* bff) {
-	free(bff->start);
-	free(bff);
-}
-
 //----------------------------------------------------------------------------------------------------
 
 

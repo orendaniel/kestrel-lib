@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // HELPERS
 //----------------------------------------------------------------------------------------------------
-Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_t b)) {
+static Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_t b)) {
 	if (img1->channels == 1 && img2->channels == 1) {
 		size_t width 	= MAX(img1->width, img2->width);	
 		size_t height 	= MAX(img1->height, img2->height);	
@@ -41,7 +41,7 @@ Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_
 	}
 }
 
-Image* arth_operation(Image* img, int (*fn)(value_t value, float x), float x) {
+static Image* arth_operation(Image* img, int (*fn)(value_t value, float x), float x) {
 	Image* result = new_image(img->channels, img->width, img->height);
 
 	for (int i = 0; i < img->height; i++) {
@@ -64,7 +64,7 @@ Image* arth_operation(Image* img, int (*fn)(value_t value, float x), float x) {
 	return result;
 }
 
-double sobel_helper(Image* img, size_t x, size_t y) {
+static double sobel_helper(Image* img, size_t x, size_t y) {
 	int Gx[3][3] = {{-1, 0, 1},
 					{-2, 0, 2},
 					{-1, 0, 1}} ;
@@ -305,7 +305,7 @@ void write_pixel_map(const char* file, Image* img) {
 
 
 	if (img->channels == 3) { // RGB image
-		fprintf(f, "P3\n%d %d %d\n", img->width, img->height, MAX_VALUE);
+		fprintf(f, "P3\n%ld %ld %d\n", img->width, img->height, MAX_VALUE);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
 				fprintf(f, "%d %d %d\n", 
@@ -317,7 +317,7 @@ void write_pixel_map(const char* file, Image* img) {
 	}
 
 	else if (img->channels == 1) { // grayscale image
-		fprintf(f, "P2\n%d %d %d\n", img->width, img->height, MAX_VALUE);
+		fprintf(f, "P2\n%ld %ld %d\n", img->width, img->height, MAX_VALUE);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
 				fprintf(f, "%d\n", get_at(img, 0, j, i, 0));
@@ -335,51 +335,64 @@ doesn't accept comments
 */
 Image* read_pixel_map(const char* file) {
 	FILE* f = fopen(file, "r");
+
 	size_t width, height, max_value;
+	char gray_mode = 0;
+
+	Image* result;
+
+	char buffer[3];
 
 	if (f == NULL) {
 		fprintf(stderr, "Cannot open file\n");
 		return NULL;
 	}
 
-	Image* result = NULL;
+	if (!fgets(buffer, sizeof(buffer), f)) {
+		fprintf(stderr, "Cannot read file\n");
+		fclose(f);
+		return NULL;
+	}
 
-	char str[2];
+	if (buffer[0] == 'P' && buffer[1] == '3')
+		gray_mode = 0;
+	else if (buffer[0] == 'P' && buffer[1] == '2')
+		gray_mode = 1;
+	else {
+		fprintf(stderr, "Invalid PPM format\n");
+		fclose(f);
+		return NULL;
+	}
+	
+	fscanf(f, "%ld %ld %ld", &width, &height, &max_value);
 
-	fscanf(f, "%s\n", str);
-	fscanf(f, "%d %d %d", &width, &height, &max_value);
 
-	if (strcmp(str, "P2") == 0) {
+	if (gray_mode) {
 		result = new_image(1, width, height);
-
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
 				value_t v;
-				if (fscanf(f, "%d", &v))
+				if (fscanf(f, "%hhd", &v))
 					set_at(result, 0, j, i, v);
 			}
 		}
 	}
-	else if (strcmp(str, "P3") == 0) {
+	else {
 		result = new_image(3, width, height);
-
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
 				for (int c = 0; c < 3; c++) {
 					value_t v;
-					if (fscanf(f, "%d", &v))
+					if (fscanf(f, "%hhd", &v))
 						set_at(result, c, j, i, v);
 				}
 			}
 		}
 	}
-	else
-		fprintf(stderr, "P3 or P2 only\n");
 
 	fclose(f);
 	return result;
 }
-
 //----------------------------------------------------------------------------------------------------
 
 // IMAGE OPERATORS

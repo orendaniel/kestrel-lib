@@ -41,4 +41,5 @@ typedef unsigned char value_t;
 #define DEFAULT_STEPS_TRACING 	3
 
 #define NOISE_COUNT 			8 // correspond to incircling single pixel's 8 neibooghers
+#define STACK_GROWTH 			100
 #endif

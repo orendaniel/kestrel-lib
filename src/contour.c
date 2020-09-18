@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /*
 traces a contour using the square tracing method
 */
-Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
+static Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
 	Contour* cnt = new_contour();
 
 	insert_point(cnt, st_x, st_y);
@@ -94,7 +94,7 @@ the stack is used to impelement a flood fill algorithm
 the stack is needed in order to calculate the area
 of a contour
 */
-struct stack* new_stack(size_t max) {
+static struct stack* new_stack(size_t max) {
 	struct stack* stk = calloc(1, sizeof(struct stack*));
 
 	stk->max 	= max;
@@ -104,14 +104,14 @@ struct stack* new_stack(size_t max) {
 	return stk;
 }
 
-void stack_push(struct stack* stk, struct point p) {
+static void stack_push(struct stack* stk, struct point p) {
 	if (stk->size != stk->max - 1) 
 		stk->items[++stk->size] = p;
 	else {
-		stk->items = realloc(stk->items, (stk->max +100) * sizeof(struct point));
+		stk->items = realloc(stk->items, (stk->max + STACK_GROWTH) * sizeof(struct point));
 		if (stk->items != 0) {
 			stk->items = stk->items;
-			stk->max += 100;
+			stk->max += STACK_GROWTH;
 			stk->items[++stk->size] = p;
 
 		}
@@ -122,7 +122,7 @@ void stack_push(struct stack* stk, struct point p) {
 	}
 }
 
-struct point stack_pop(struct stack* stk) {
+static struct point stack_pop(struct stack* stk) {
 	if (stk->size > 0)
 		return stk->items[stk->size--];
 	else {
