@@ -33,6 +33,4 @@ lua 5.3
 
 -lua rocks
 
--improve the I/O functions
-
 -porting to lua 5.4 ( at some point in the future )
