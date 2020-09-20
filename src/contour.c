@@ -106,12 +106,12 @@ static struct stack* new_stack(size_t max) {
 
 static void stack_push(struct stack* stk, struct point p) {
 	if (stk->size != stk->max - 1) 
-		stk->items[++stk->size] = p;
+		stk->items[stk->size++] = p;
 	else {
 		stk->items = realloc(stk->items, (stk->max + STACK_GROWTH) * sizeof(struct point));
 		if (stk->items != 0) {
 			stk->max += STACK_GROWTH;
-			stk->items[++stk->size] = p;
+			stk->items[stk->size++] = p;
 
 		}
 		else {
