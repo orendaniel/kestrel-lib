@@ -123,7 +123,7 @@ static void stack_push(struct stack* stk, struct point p) {
 
 static struct point stack_pop(struct stack* stk) {
 	if (stk->size > 0)
-		return stk->items[stk->size--];
+		return stk->items[--stk->size];
 	else {
 		fprintf(stderr, "Stack underflow\n");
 		exit(EXIT_FAILURE);
