@@ -23,22 +23,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // HELPERS
 //----------------------------------------------------------------------------------------------------
-static Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_t b)) {
-	if (img1->channels == 1 && img2->channels == 1) {
-		size_t width 	= MAX(img1->width, img2->width);	
-		size_t height 	= MAX(img1->height, img2->height);	
-		Image* result 	= new_image(1, width, height);
 
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++)
-				set_at(result, 0, i, j, (*fn)(get_at(img1, 0, j, i, 0), get_at(img2, 0, j, i, 0)));
-		}
-		return result;
-	}
-	else {
-		fprintf(stderr, "Bitwise operation for binary images only\n");
-		return NULL;
-	}
+static int add(value_t current, float x) {
+	return (int)((float)current + x);
+}
+
+static int subtract(value_t current, float x) {
+	return (int)((float)current - x);
+}
+
+
+static int multiply(value_t current, float x) {
+	return (int)((float)current * x);
+}
+
+static int divide(value_t current, float x) {
+	return (int)((float)current / x);
 }
 
 static Image* arth_operation(Image* img, int (*fn)(value_t value, float x), float x) {
@@ -63,6 +63,37 @@ static Image* arth_operation(Image* img, int (*fn)(value_t value, float x), floa
 
 	return result;
 }
+
+static value_t and(value_t a, value_t b) {
+	return a && b;
+}
+
+static value_t or(value_t a, value_t b) {
+	return a || b;
+}
+
+static value_t xor(value_t a, value_t b) {
+	return (!a && b) || (a && !b);
+}
+
+static Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a, value_t b)) {
+	if (img1->channels == 1 && img2->channels == 1) {
+		size_t width 	= MAX(img1->width, img2->width);	
+		size_t height 	= MAX(img1->height, img2->height);	
+		Image* result 	= new_image(1, width, height);
+
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++)
+				set_at(result, 0, i, j, (*fn)(get_at(img1, 0, j, i, 0), get_at(img2, 0, j, i, 0)));
+		}
+		return result;
+	}
+	else {
+		fprintf(stderr, "Bitwise operation for binary images only\n");
+		return NULL;
+	}
+}
+
 
 static double sobel_helper(Image* img, size_t x, size_t y) {
 	int Gx[3][3] = {{-1, 0, 1},
@@ -437,33 +468,23 @@ Image* concat_channels(Image* img1, Image* img2) {
 	return result;
 }
 
+
 Image* image_add(Image* img, float x) {
-	int add(value_t current, float x) {
-		return (int)((float)current + x);
-	}
-	arth_operation(img, &add, x);
+	return arth_operation(img, &add, x);
 }
 
 Image* image_sub(Image* img, float x) {
-	int sub(value_t current, float x) {
-		return (int)((float)current - x);
-	}
-	arth_operation(img, &sub, x);
+	return arth_operation(img, &subtract, x);
 }
 
 Image* image_mul(Image* img, float x) {
-	int mul(value_t current, float x) {
-		return (int)((float)current * x);
-	}
-	arth_operation(img, &mul, x);
+	return arth_operation(img, &multiply, x);
 }
 
 Image* image_div(Image* img, float x) {
-	int div(value_t current, float x) {
-		return (int)((float)current / x);
-	}
-	arth_operation(img, &div, x);
+	return arth_operation(img, &divide, x);
 }
+
 
 Image* image_not(Image* img) {
 	if (img->channels == 1) {
@@ -482,23 +503,14 @@ Image* image_not(Image* img) {
 }
 
 Image* image_and(Image* img1, Image* img2) {
-	value_t and(value_t a, value_t b) {
-		return a && b;
-	}
 	return logic_operation(img1, img2, &and);
 }
 
 Image* image_or(Image* img1, Image* img2) {
-	value_t or(value_t a, value_t b) {
-		return a || b;
-	}
 	return logic_operation(img1, img2, &or);
 }
 
 Image* image_xor(Image* img1, Image* img2) {
-	value_t xor(value_t a, value_t b) {
-		return (!a && b) || (a && !b);
-	}
 	return logic_operation(img1, img2, &xor);
 }
 
