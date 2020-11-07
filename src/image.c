@@ -42,7 +42,7 @@ static int divide(value_t current, float x) {
 }
 
 static Image* arth_operation(Image* img, int (*fn)(value_t value, float x), float x) {
-	Image* result = new_image(img->channels, img->width, img->height);
+	Image* result = make_image(img->channels, img->width, img->height);
 
 	for (int i = 0; i < img->height; i++) {
 		for (int j = 0; j < img->width; j++) {
@@ -80,7 +80,7 @@ static Image* logic_operation(Image* img1, Image* img2, value_t (*fn)(value_t a,
 	if (img1->channels == 1 && img2->channels == 1) {
 		size_t width 	= MAX(img1->width, img2->width);	
 		size_t height 	= MAX(img1->height, img2->height);	
-		Image* result 	= new_image(1, width, height);
+		Image* result 	= make_image(1, width, height);
 
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++)
@@ -117,7 +117,7 @@ static double sobel_helper(Image* img, size_t x, size_t y) {
 // COMMON FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-Image* new_image(size_t channels, size_t width, size_t height) {
+Image* make_image(size_t channels, size_t width, size_t height) {
 	value_t* data = calloc(width * height * channels, sizeof(value_t));
 	if (data) {
 		Image* img 		= malloc(sizeof(Image));
@@ -172,7 +172,7 @@ void set_at(Image* img, size_t chnl, size_t x, size_t y, value_t value) {
 
 Image* split_channel(Image* img, size_t c) {
 	if (c < img->channels) {
-		Image* result = new_image(1, img->width, img->height);
+		Image* result = make_image(1, img->width, img->height);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) 
 				set_at(result, 0, j, i, get_at(img, c, j, i, 0));
@@ -192,7 +192,7 @@ in range doesn't check if lower and upper's array lengths are valid
 it assumes that lower and upper's length are both equal to the number of channels
 */
 Image* in_range(Image* img, value_t* lower, value_t* upper, value_t on, value_t off) {
-	Image* result = new_image(1, img->width, img->height);
+	Image* result = make_image(1, img->width, img->height);
 	size_t chnls = img->channels;
 	value_t current[chnls];
 	for (int i = 0; i < img->height; i++) {
@@ -217,7 +217,7 @@ RGB to HSV conversion
 */
 Image* rgb_to_hsv(Image* img) {
 	if (img->channels == 3) {
-		Image* result = new_image(3, img->width, img->height);
+		Image* result = make_image(3, img->width, img->height);
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++) {
 				float r 	= (float)get_at(img, 0, j, i, 0)/255;
@@ -257,7 +257,7 @@ any image type to grayscale conversion
 average of all channels
 */
 Image* grayscale(Image* img) {
-	Image* result 		= new_image(1, img->width, img->height);
+	Image* result 		= make_image(1, img->width, img->height);
 	size_t chnls_amount = img->channels;
 
 	for (int i = 0; i < img->height; i++) {
@@ -280,7 +280,7 @@ Image* sobel(Image* img) {
 
 	if (img->channels == 1) {
 
-		Image* result = new_image(1, img->width, img->height);
+		Image* result = make_image(1, img->width, img->height);
 		for (int i = 2; i < img->height -2; i++) {
 			for (int j = 2; j < img->width -2; j++) {
 				int 	sv 	= (int)sobel_helper(img, j, i);
@@ -306,7 +306,7 @@ Image* sobel(Image* img) {
 returns the inverted image
 */
 Image* invert_image(Image* img) {
-	Image* result = new_image(img->channels, img->width, img->height);
+	Image* result = make_image(img->channels, img->width, img->height);
 
 	for (int i = 0; i < img->height; i++) {
 		for (int j = 0; j < img->width; j++) {
@@ -399,7 +399,7 @@ Image* read_pixel_map(const char* file) {
 
 
 	if (gray_mode) {
-		result = new_image(1, width, height);
+		result = make_image(1, width, height);
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
 				value_t v;
@@ -409,7 +409,7 @@ Image* read_pixel_map(const char* file) {
 		}
 	}
 	else {
-		result = new_image(3, width, height);
+		result = make_image(3, width, height);
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
 				for (int c = 0; c < 3; c++) {
@@ -452,7 +452,7 @@ Image* concat_channels(Image* img1, Image* img2) {
 	size_t max_width 	= MAX(img1->width, img2->width);
 	size_t max_height 	= MAX(img1->height, img2->height);
 	size_t channels 	= img1->channels + img2->channels;
-	Image* result 		= new_image(channels, max_width, max_height);
+	Image* result 		= make_image(channels, max_width, max_height);
 
 	for (int i = 0; i < max_height; i++) {
 		for (int j = 0; j < max_width; j++){
@@ -488,7 +488,7 @@ Image* image_div(Image* img, float x) {
 
 Image* image_not(Image* img) {
 	if (img->channels == 1) {
-		Image* result = new_image(img->channels, img->width, img->height);
+		Image* result = make_image(img->channels, img->width, img->height);
 
 		for (int i = 0; i < img->height; i++) {
 			for (int j = 0; j < img->width; j++)

@@ -51,7 +51,7 @@ typedef struct {
 // DEVICE FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-Device*		new_device(const char* name, size_t width, size_t height);
+Device*		make_device(const char* name, size_t width, size_t height);
 Image*		read_frame(Device* dev);
 void		free_device(Device* dev);
 

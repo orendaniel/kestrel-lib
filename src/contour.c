@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 traces a contour using the square tracing method
 */
 static Contour* square_trace(size_t st_x, size_t st_y, Image* img, Image* buffer) {
-	Contour* cnt = new_contour();
+	Contour* cnt = make_contour();
 
 	insert_point(cnt, st_x, st_y);
 
@@ -94,7 +94,7 @@ the stack is used to impelement a flood fill algorithm
 the stack is needed in order to calculate the area
 of a contour
 */
-static struct stack* new_stack(size_t max) {
+static struct stack* make_stack(size_t max) {
 	struct stack* stk = calloc(1, sizeof(struct stack*));
 
 	stk->max 	= max;
@@ -135,7 +135,7 @@ static struct point stack_pop(struct stack* stk) {
 // COMMON FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-Contour* new_contour() {
+Contour* make_contour() {
 	size_t size = CONTOUR_ALLOCATION_SIZE;
 
 	struct point* points = calloc(size, sizeof(struct point));
@@ -156,7 +156,7 @@ Contour* new_contour() {
 
 void insert_point(Contour* cnt, size_t x, size_t y) {
 	if (cnt->index < cnt->size) {
-		struct point p = {x, y};
+		struct point p 			= {x, y};
 		cnt->points[cnt->index] = p;
 
 		cnt->index++;
@@ -164,9 +164,9 @@ void insert_point(Contour* cnt, size_t x, size_t y) {
 	else {
 		struct point* tmp = realloc(cnt->points, sizeof(struct point) * (cnt->size + CONTOUR_ALLOCATION_SIZE));
 		if (tmp != 0) {
-			cnt->points = tmp;
-			cnt->size += CONTOUR_ALLOCATION_SIZE;
-			struct point p = {x, y};
+			cnt->points 			= tmp;
+			cnt->size 				+= CONTOUR_ALLOCATION_SIZE;
+			struct point p 			= {x, y};
 			cnt->points[cnt->index] = p;
 
 			cnt->index++;
@@ -200,7 +200,7 @@ Contour** find_contours(Image* img, size_t* index_size, size_t steps_x, size_t s
 
 	if (img->channels == 1) {
 
-		Image* 		buffer 	= new_image(1, img->width, img->height); // keep track of points on other contours
+		Image* 		buffer 	= make_image(1, img->width, img->height); // keep track of points on other contours
 		Contour** 	cnts 	= malloc(sizeof(Contour**));
 		size_t 		amount 	= 0;
 
@@ -307,14 +307,14 @@ size_t get_contour_area(Contour* cnt) {
 	size_t cnt_w = exp[1].x - exp[3].x +1;
 	size_t cnt_h = exp[2].y - exp[0].y +1;
 
-	Image* buffer = new_image(1, cnt_w +2, cnt_h +2);
+	Image* buffer = make_image(1, cnt_w +2, cnt_h +2);
 
 	size_t area = (cnt_w +2) * (cnt_h +2);
 
 	for (int i = 0; i < cnt->index; i++)
 		set_at(buffer, 0, cnt->points[i].x -exp[3].x +1, cnt->points[i].y -exp[0].y +1, 1);
 
-	struct stack* 	stk = new_stack(area);
+	struct stack* 	stk = make_stack(area);
 	struct point 	p 	= {0, 0};
 	stack_push(stk, p);
 

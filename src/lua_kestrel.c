@@ -68,12 +68,12 @@ static int push_image(lua_State* L, Image* img) {
 // KESTREL
 //----------------------------------------------------------------------------------------------------
 
-static int lua_new_image(lua_State* L) {
+static int lua_make_image(lua_State* L) {
 	size_t c = luaL_checkinteger(L, 1);
 	size_t w = luaL_checkinteger(L, 2);
 	size_t h = luaL_checkinteger(L, 3);
 	
-	Image* img = new_image(c, w, h);
+	Image* img = make_image(c, w, h);
 	push_image(L, img);
 
 	return 1;	
@@ -112,7 +112,7 @@ static int lua_open_device(lua_State* L) {
 	const char* path 	= luaL_checkstring(L, 1);
 	size_t 		width 	= luaL_optinteger(L, 2, DEFAULT_DEVICE_WIDTH);
 	size_t 		height	= luaL_optinteger(L, 3, DEFAULT_DEVICE_HEIGHT);
-	Device* 	dev 	= new_device(path, width, height);
+	Device* 	dev 	= make_device(path, width, height);
 
 	if (dev == NULL)
 		return 0;
@@ -505,7 +505,7 @@ static int lua_gc_contour(lua_State* L) {
 
 int LUA_API luaopen_kestrel(lua_State* L) {
 	const luaL_Reg lib[] = {
-		{"newimage",			lua_new_image},
+		{"newimage",			lua_make_image},
 		{"rgb_to_hsv", 			lua_rgb_to_hsv},
 		{"grayscale", 			lua_grayscale},
 		{"sobel", 				lua_sobel},

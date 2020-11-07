@@ -31,7 +31,7 @@ typedef struct {
 // COMMON FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-Image* 		new_image(size_t channels, size_t width, size_t height);
+Image* 		make_image(size_t channels, size_t width, size_t height);
 void 		free_image(Image* img);
 value_t 	get_at(Image* img, size_t chnl, size_t x, size_t y, value_t def_value);
 void 		set_at(Image* img, size_t chnl, size_t x, size_t y, value_t value);

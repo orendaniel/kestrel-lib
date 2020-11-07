@@ -43,7 +43,7 @@ static void	xioctl(int fh, int request, void* arg) {
 // DEVICE FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-Device*	new_device(const char* name, size_t width, size_t height) {
+Device*	make_device(const char* name, size_t width, size_t height) {
 	Device* dev = calloc(1, sizeof(Device));
 
 	dev->fd = v4l2_open(name, O_RDWR | O_NONBLOCK, 0);
@@ -148,7 +148,7 @@ Image* read_frame(Device* dev) {
 	dev->v4l_buffer->memory = V4L2_MEMORY_MMAP;
 	xioctl(dev->fd, VIDIOC_DQBUF, dev->v4l_buffer);
 
-	Image* img = new_image(3, dev->fmt->fmt.pix.width, dev->fmt->fmt.pix.height);
+	Image* img = make_image(3, dev->fmt->fmt.pix.width, dev->fmt->fmt.pix.height);
 	if (img) {
 		memcpy(img->data, dev->buffers[dev->v4l_buffer->index].start, 
 			img->channels * img->width * img->height);
