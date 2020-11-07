@@ -68,7 +68,7 @@ static int push_image(lua_State* L, Image* img) {
 // KESTREL
 //----------------------------------------------------------------------------------------------------
 
-static int lua_make_image(lua_State* L) {
+static int lua_new_image(lua_State* L) {
 	size_t c = luaL_checkinteger(L, 1);
 	size_t w = luaL_checkinteger(L, 2);
 	size_t h = luaL_checkinteger(L, 3);
@@ -505,7 +505,7 @@ static int lua_gc_contour(lua_State* L) {
 
 int LUA_API luaopen_kestrel(lua_State* L) {
 	const luaL_Reg lib[] = {
-		{"newimage",			lua_make_image},
+		{"newimage",			lua_new_image},
 		{"rgb_to_hsv", 			lua_rgb_to_hsv},
 		{"grayscale", 			lua_grayscale},
 		{"sobel", 				lua_sobel},
