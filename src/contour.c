@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	get_at(IMAGE, 0, X-1, Y, 0) && \
 	get_at(IMAGE, 0, X, Y-1, 0))
 
+
+
 // HELPERS
 //----------------------------------------------------------------------------------------------------
 
@@ -97,8 +99,8 @@ of a contour
 static struct stack* make_stack(size_t max) {
 	struct stack* stk = calloc(1, sizeof(struct stack*));
 
-	stk->max 	= max;
 	stk->size 	= 0;
+	stk->max 	= max;
 	stk->items 	= calloc(max, sizeof(struct point));
 
 	return stk;
