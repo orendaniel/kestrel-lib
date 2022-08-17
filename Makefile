@@ -1,5 +1,8 @@
+LUA_VERSION=5.4
+
 all:
-	gcc src/*.c -I /usr/include/lua5.3/ -llua5.3 -lv4l2 -lm -fPIC -shared -o /usr/local/lib/lua/5.3/kestrel.so
+	mkdir -p /usr/local/lib/lua/$(LUA_VERSION)
+	gcc src/*.c -I /usr/include/lua$(LUA_VERSION)/ -llua$(LUA_VERSION) -lv4l2 -lm -fPIC -shared -o /usr/local/lib/lua/$(LUA_VERSION)/kestrel.so
 
 clean:
-	rm /usr/local/share/lua/5.3/kestrel.so
+	rm /usr/local/share/lua/$(LUA_VERSION)/kestrel.so

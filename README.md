@@ -20,17 +20,15 @@ Furthermore Kestrel is still under development and is currently unstable.
 
 libv4l
 
-lua 5.3
+lua 5.3 / 5.4 (choose version on make files)
 
 
 
 ## TODO
 
 
--documentation / check memory leaks / debugging
+-documentation / check for memory leaks / debugging
 
 -better Makefile
 
 -lua rocks
-
--porting to lua 5.4 ( at some point in the future )
