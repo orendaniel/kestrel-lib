@@ -4,7 +4,7 @@
 Kestrel is a simple and lightweight computer vision library for the Lua language written in C.
 
 you can also check kestrel vision
-https://gitlab.com/oren_daniel/kestrel-vision
+https://github.com/orendaniel/kestrel-vision
 
 ## Why you shouldn't choose Kestrel over X
 
